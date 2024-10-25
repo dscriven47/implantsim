@@ -40,7 +40,8 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
 
     G4OpticalSurface *mirrorSurface;
 
-    G4Material *SiO2, *H2O, *Aerogel, *worldMat, *NaI;
+    // material definitions
+    G4Material *SiO2, *H2O, *Aerogel, *worldMat, *NaI, *CeBr3, *Quartz, *Si;
     G4Element *C, *Na, *I;
 
     G4GenericMessenger *fMessenger;

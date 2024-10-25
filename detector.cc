@@ -34,6 +34,10 @@ G4bool MySensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory *ROhis
 { 
   G4Track *track = aStep->GetTrack(); // this allows us to track our particle in the sensitive detector
 
+  //G4cout << track->GetParticleDefinition()->GetParticleName() << G4endl;
+
+
+  //if(track->GetParticleDefinition()->GetParticleName() == "opticalphoton") 
   track->SetTrackStatus(fStopAndKill);
 
   G4StepPoint *preStepPoint = aStep->GetPreStepPoint(); // when the photon enters the detector
@@ -73,7 +77,7 @@ G4bool MySensitiveDetector::ProcessHits(G4Step *aStep, G4TouchableHistory *ROhis
   //man->FillNtupleDColumn(0, 4, wlen);
   man->FillNtupleDColumn(0, 5, time);
   man->AddNtupleRow(0);
-  
+
 
   if(G4UniformRand() < quEff->Value(wlen)){
     man->FillNtupleIColumn(1, 0, evt);

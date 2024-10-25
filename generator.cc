@@ -7,7 +7,7 @@ MyPrimaryGenerator::MyPrimaryGenerator()
   G4ParticleTable *particleTable = G4ParticleTable::GetParticleTable();
   G4String particleName = "proton";
   G4ParticleDefinition *particle = particleTable->FindParticle("geantino");
-  G4ThreeVector pos(0.,0.,5.*cm); // the position of the particle gun
+  G4ThreeVector pos(0.,0.,1.*cm); // the position of the particle gun
   G4ThreeVector mom(0.,0.,1.); // the particle momentum
   // set particle gun parameters
   fParticleGun->SetParticlePosition(pos);
