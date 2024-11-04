@@ -20,9 +20,9 @@ MyDetectorConstruction::MyDetectorConstruction()
   isTOF=false;
 
   // size of the world volume
-  xWorld = 0.1*m;
-  yWorld = 0.1*m;
-  zWorld = 0.1*m;
+  xWorld = 0.05*m;
+  yWorld = 0.05*m;
+  zWorld = 0.05*m;
 }
 
 MyDetectorConstruction::~MyDetectorConstruction()
@@ -31,7 +31,9 @@ MyDetectorConstruction::~MyDetectorConstruction()
 }
 
 void MyDetectorConstruction::DefineMaterials()
-{
+{ 
+
+  ////////////////////////////// Define Materials /////////////////////////////
   G4NistManager *nist = G4NistManager::Instance(); // this will call a nist database which can be used to source materials
 
   // make our first material, fused silica
@@ -43,6 +45,22 @@ void MyDetectorConstruction::DefineMaterials()
   H2O = new G4Material("H2O", 1.000*g/cm3, 2);
   H2O->AddElement(nist->FindOrBuildElement("H"), 2);
   H2O->AddElement(nist->FindOrBuildElement("O"), 1);
+
+  B2O3 = new G4Material("B2O3",2.46*g/cm3,2);
+  B2O3->AddElement(nist->FindOrBuildElement("B"),2);
+  B2O3->AddElement(nist->FindOrBuildElement("O"),3);
+
+  Na2O = new G4Material("Na2O",2.27,2);
+  Na2O->AddElement(nist->FindOrBuildElement("Na"),2);
+  Na2O->AddElement(nist->FindOrBuildElement("O"),1);
+
+  Al2O3 = new G4Material("Al2O3",3.99*g/cm3,2);
+  Al2O3->AddElement(nist->FindOrBuildElement("Al"),2);
+  Al2O3->AddElement(nist->FindOrBuildElement("O"),3);
+
+  CaO = new G4Material("CaO",3.34*g/cm3,2);
+  CaO->AddElement(nist->FindOrBuildElement("O"),1);
+  CaO->AddElement(nist->FindOrBuildElement("O"),1);
 
   // definition for carbon
   C = nist->FindOrBuildElement("C");
@@ -57,7 +75,14 @@ void MyDetectorConstruction::DefineMaterials()
   Aerogel->AddMaterial(H2O, 37.4*perCent);
   Aerogel->AddElement(C, 0.1*perCent);
 
-  // cebr
+  // NaI
+  Na = nist->FindOrBuildElement("Na");
+  I = nist->FindOrBuildElement("I");
+  NaI = new G4Material("NaI",3.67*g/cm3,2);
+  NaI->AddElement(Na,1);
+  NaI->AddElement(I,1);
+
+  // CeBr3
   CeBr3 = new G4Material("CeBr3",5.23*g/cm3,2);
   CeBr3->AddElement(nist->FindOrBuildElement("Ce"),1); 
   CeBr3->AddElement(nist->FindOrBuildElement("Br"),3);
@@ -66,19 +91,39 @@ void MyDetectorConstruction::DefineMaterials()
   Quartz = new G4Material("Quartz",2.65*g/cm3,1);
   Quartz->AddMaterial(SiO2,1);
 
+  // world material
   worldMat = nist->FindOrBuildMaterial("G4_AIR");
 
-  // setup the refractive properties of the aerogel
-  // 1.239841939 is the conversion from nm to eV
-  G4double energy[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
-  G4double rindexAerogel[2] = {1.1,1.1};
-  G4double rindexWorld[2] = {1.,1.};
-  G4double rindexNaI[2] = {1.78,1.78};
-  G4double reflectivity[2] = {1.0,1.0};
-  G4double fraction[2] = {1.0,1.0}; // fast component spectrum
+  // Borosilicate glass window
+  Borosilicate = new G4Material("Borosilicate",2.23*g/cm3,5);
+  Borosilicate->AddMaterial(SiO2, 75.00*perCent);
+  Borosilicate->AddMaterial(B2O3, 10.50*perCent);
+  Borosilicate->AddMaterial(Na2O, 5.00*perCent);
+  Borosilicate->AddMaterial(Al2O3,7.00*perCent);
+  Borosilicate->AddMaterial(CaO,1.50*perCent);
 
-  //setup optical properties of CeBr3
-  // we can use constant properties (single value) or properties (arrays)
+
+
+  // Bialkali photocathode
+  //Bialkali = new G4Material("Bialkali",)
+
+
+
+  ////////////////////////// Define Optical Properties ////////////////////////
+  
+
+
+  // setup the refractive properties of the aerogel
+  G4double rindexAerogel[2] = {1.1,1.1};
+  G4double energyAerogel[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
+
+  G4MaterialPropertiesTable *mptAerogel = new G4MaterialPropertiesTable(); // make a material property for the aerogel and add the above properties to the table
+  mptAerogel->AddProperty("RINDEX",energyAerogel,rindexAerogel,2);
+  Aerogel->SetMaterialPropertiesTable(mptAerogel); // now add the material properties table to the material
+
+
+
+  // setup optical properties of CeBr3
   G4double energyCeBr3[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
   G4double rindexCeBr3[2] = {2.09,2.09};
   //G4double reflectivityCeBr3[2] = {1.0,1.0};
@@ -88,22 +133,20 @@ void MyDetectorConstruction::DefineMaterials()
   mptCeBr3->AddProperty("RINDEX",energyCeBr3,rindexCeBr3,2);
   mptCeBr3->AddProperty("FASTCOMPONENT",energyCeBr3,fractionCeBr3,2);
   //mptCeBr3->AddProperty("ABSLENGTH",energy,fraction,2);
-  mptCeBr3->AddConstProperty("FASTCOMPONENT",38000./MeV);
   mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
   mptCeBr3->AddConstProperty("RESOLUTIONSCALE",1.0);
   mptCeBr3->AddConstProperty("FASTTIMECONSTANT",20*ns);
   mptCeBr3->AddConstProperty("YIELDRATIO",1.);
   CeBr3->SetMaterialPropertiesTable(mptCeBr3);
   // we also need to define the surface properties
-  
   // also quenching
 
+
+
   //setup optical properties of quartz
-  // we can use constant properties (single value) or properties (arrays)
   G4double energyQuartz[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
   G4double rindexQuartz[2] = {2.0,2.0};
   G4double reflectivityQuartz[2] = {0.08,0.08};
-
 
   G4MaterialPropertiesTable *mptQuartz = new G4MaterialPropertiesTable();
   mptQuartz->AddProperty("RINDEX",energyQuartz,rindexQuartz,2);
@@ -118,42 +161,52 @@ void MyDetectorConstruction::DefineMaterials()
   Quartz->SetMaterialPropertiesTable(mptQuartz);
   //also need to define the surface properties
 
-
-
-
-
-  G4MaterialPropertiesTable *mptAerogel = new G4MaterialPropertiesTable(); // make a material property for the aerogel and add the above properties to the table
-  mptAerogel->AddProperty("RINDEX",energy,rindexAerogel,2);
-  Aerogel->SetMaterialPropertiesTable(mptAerogel); // now add the material properties table to the material
   
+
+  // World optical properties
+  G4double energyWorld[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
+  G4double rindexWorld[2] = {1.,1.};
+
   G4MaterialPropertiesTable *mptWorld = new G4MaterialPropertiesTable();
-  mptWorld->AddProperty("RINDEX",energy,rindexWorld,2);
+  mptWorld->AddProperty("RINDEX",energyWorld,rindexWorld,2);
   worldMat->SetMaterialPropertiesTable(mptWorld);
-
-  Na = nist->FindOrBuildElement("Na");
-  I = nist->FindOrBuildElement("I");
-  NaI = new G4Material("NaI",3.67*g/cm3,2);
-  NaI->AddElement(Na,1);
-  NaI->AddElement(I,1);
+  
 
 
-  // optical properties for NaI scintillator (simple)
+  // NaI Scintillator optical properties
+  G4double energyNaI[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
+  G4double rindexNaI[2] = {1.78,1.78};
+  G4double fractionNaI[2] = {1.0,1.0}; // fast component spectrum
+
   G4MaterialPropertiesTable *mptNaI = new G4MaterialPropertiesTable();
-  mptNaI->AddProperty("RINDEX",energy,rindexNaI,2);
-  mptNaI->AddProperty("FASTCOMPONENT",energy,fraction,2);
+  mptNaI->AddProperty("RINDEX",energyNaI,rindexNaI,2);
+  mptNaI->AddProperty("FASTCOMPONENT",energyNaI,fractionNaI,2);
   mptNaI->AddConstProperty("SCINTILLATIONYIELD",38000./MeV);
   mptNaI->AddConstProperty("RESOLUTIONSCALE",1.0);
   mptNaI->AddConstProperty("FASTTIMECONSTANT",250*ns);
   mptNaI->AddConstProperty("YIELDRATIO",1.);
   NaI->SetMaterialPropertiesTable(mptNaI);
 
-  // optical properties for the optical coating of NaI
+
+
+  // Borosilicate glass optical properties
+  G4double energyBorosilicate[2] = {1.*eV,10.*eV};
+  G4double rindexBorosilicate[2] = {1.49,1.537};
+  G4MaterialPropertiesTable *mptBorosilicate = new G4MaterialPropertiesTable();
+  mptBorosilicate->AddProperty("RINDEX",energyBorosilicate,rindexBorosilicate,2);
+  Borosilicate->SetMaterialPropertiesTable(mptNaI);
+
+
+  // Mirror Surface optical properties
+  G4double energyMirror[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
+  G4double reflectivityMirror[2] = {1.0,1.0};
+
   mirrorSurface = new G4OpticalSurface("mirrorSurface");
   mirrorSurface->SetType(dielectric_metal);
   mirrorSurface->SetFinish(ground);
   mirrorSurface->SetModel(unified);
   G4MaterialPropertiesTable *mptMirror = new G4MaterialPropertiesTable();
-  mptMirror->AddProperty("REFLECTIVITY",energy,reflectivity,2);
+  mptMirror->AddProperty("REFLECTIVITY",energyMirror,reflectivityMirror,2);
   mirrorSurface->SetMaterialPropertiesTable(mptMirror);
 }
 
@@ -206,21 +259,33 @@ void MyDetectorConstruction::ConstructScintillator()
   
   
   solidScintillator = new G4Box("solidScintillator",cebr_xsize/2,cebr_ysize/2,cebr_zsize/2);
-  logicScintillator = new G4LogicalVolume(solidScintillator, CeBr3, "logicalScintillator");
-  G4LogicalSkinSurface *skin = new G4LogicalSkinSurface("skin",logicWorld,mirrorSurface);
+  logicScintillator = new G4LogicalVolume(solidScintillator, NaI, "logicalScintillator");
+  //G4LogicalSkinSurface *skin = new G4LogicalSkinSurface("skin",logicWorld,mirrorSurface);
   physScintillator = new G4PVPlacement(0,G4ThreeVector(cebr_xpos,cebr_ypos,cebr_zpos),logicScintillator,"physScintillator",logicWorld, false, 0, true);
+
+  // PMT glass window dimensions
+  G4double pmt_winX1 = 51.8*mm;
+  G4double pmt_winX2 = 48.5*mm;
+  G4double pmt_winY1 = 51.8*mm;
+  G4double pmt_winY2 = 48.5*mm;
+  G4double pmt_winZ  =  2.0*mm;
+  solidPMTWindow = new G4Trd("solidPMTWindow",pmt_winX1/2.,pmt_winX2/2.,pmt_winY1/2.,pmt_winY2/2.,pmt_winZ/2.);
+  logicPMTWindow = new G4LogicalVolume(solidPMTWindow,Borosilicate,"logicPMTWindow");
+  physPMTWindow = new G4PVPlacement(0,G4ThreeVector(0,0,cebr_zpos-cebr_zsize/2.-pmt_winZ/2.),logicPMTWindow,"physPMTWindow",logicWorld,false,0,true);
+
 
 
   G4int pspmt_xn=16;
   G4int pspmt_yn=16;
   solidDetector = new G4Box("solidDetector", pspmt_cath_xsize/2,pspmt_cath_ysize/2,pspmt_cath_zsize/2);
-  logicDetector = new G4LogicalVolume(solidDetector, Si, "logicDetector");
+  logicDetector = new G4LogicalVolume(solidDetector, worldMat, "logicDetector");  
   for(G4int j=0; j<pspmt_yn; j++){
     for(G4int i=0; i<pspmt_xn; i++){
+
       physDetector = new G4PVPlacement(0,
                         G4ThreeVector(-pspmt_xn*pspmt_cath_xsize/2+pspmt_cath_xsize/2+i*pspmt_cath_xsize,
                                       -pspmt_yn*pspmt_cath_ysize/2+pspmt_cath_ysize/2+j*pspmt_cath_ysize,
-                                      cebr_zpos-cebr_zsize/2-pspmt_cath_zsize/2),logicDetector,"physDetector",logicWorld, false, 0, true);
+                                      -pmt_winZ/2.+pspmt_cath_zsize/2.),logicDetector,"physDetector",logicPMTWindow, false, 0, true);
     }
   }
 
@@ -275,8 +340,16 @@ void MyDetectorConstruction::ConstructSDandField()
 
 void MyDetectorConstruction::VisAttributes()
 {
-  G4VisAttributes *scint_va = new G4VisAttributes(G4Color(0.4,0.4,0.8,0.4));
+  G4VisAttributes *scint_va = new G4VisAttributes(G4Color(0.4,0.4,0.8,0.2));
   scint_va->SetForceSolid(true);
   logicScintillator->SetVisAttributes(scint_va);
+
+  G4VisAttributes *photocath_va = new G4VisAttributes(G4Color(1.0,0.6,0.4,0.5));
+  photocath_va->SetForceSolid(true);
+  logicDetector->SetVisAttributes(photocath_va);
+
+  G4VisAttributes *PMTglass_va = new G4VisAttributes(G4Color(1.0,1.0,1.0,0.2));
+  PMTglass_va->SetForceSolid(true);
+  logicPMTWindow->SetVisAttributes(PMTglass_va);
 
 }
