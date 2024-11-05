@@ -20,9 +20,9 @@ MyDetectorConstruction::MyDetectorConstruction()
   isTOF=false;
 
   // size of the world volume
-  xWorld = 0.05*m;
-  yWorld = 0.05*m;
-  zWorld = 0.05*m;
+  xWorld = 0.08*m;
+  yWorld = 0.08*m;
+  zWorld = 0.08*m;
 }
 
 MyDetectorConstruction::~MyDetectorConstruction()
@@ -34,7 +34,8 @@ void MyDetectorConstruction::DefineMaterials()
 { 
 
   ////////////////////////////// Define Materials /////////////////////////////
-  G4NistManager *nist = G4NistManager::Instance(); // this will call a nist database which can be used to source materials
+  // this will call a nist database which can be used to source materials
+  G4NistManager *nist = G4NistManager::Instance(); 
 
   // make our first material, fused silica
   SiO2 = new G4Material("SiO2", 2.201*g/cm3, 2);
@@ -96,11 +97,15 @@ void MyDetectorConstruction::DefineMaterials()
 
   // Borosilicate glass window
   Borosilicate = new G4Material("Borosilicate",2.23*g/cm3,5);
-  Borosilicate->AddMaterial(SiO2, 75.00*perCent);
-  Borosilicate->AddMaterial(B2O3, 10.50*perCent);
+  Borosilicate->AddMaterial(SiO2,75.00*perCent);
+  Borosilicate->AddMaterial(B2O3,10.50*perCent);
   Borosilicate->AddMaterial(Na2O, 5.00*perCent);
   Borosilicate->AddMaterial(Al2O3,7.00*perCent);
-  Borosilicate->AddMaterial(CaO,1.50*perCent);
+  Borosilicate->AddMaterial(CaO,  1.50*perCent);
+
+  // Aluminum
+  Aluminum = new G4Material("Aluminum",2.7*g/cm3,1);
+  Aluminum->AddElement(nist->FindOrBuildElement("Al"),1);
 
 
 
@@ -109,7 +114,7 @@ void MyDetectorConstruction::DefineMaterials()
 
 
 
-  ////////////////////////// Define Optical Properties ////////////////////////
+  ////////////////////////// Define Optical Properties ///////////////////////
   
 
 
@@ -145,12 +150,12 @@ void MyDetectorConstruction::DefineMaterials()
 
   //setup optical properties of quartz
   G4double energyQuartz[2] = {1.239841939*eV/0.2, 1.239841939*eV/0.9};
-  G4double rindexQuartz[2] = {2.0,2.0};
+  G4double rindexQuartz[2] = {1.5,1.5};
   G4double reflectivityQuartz[2] = {0.08,0.08};
 
   G4MaterialPropertiesTable *mptQuartz = new G4MaterialPropertiesTable();
   mptQuartz->AddProperty("RINDEX",energyQuartz,rindexQuartz,2);
-  mptQuartz->AddProperty("REFLECTIVITY",energyQuartz,reflectivityQuartz,2);
+  //mptQuartz->AddProperty("REFLECTIVITY",energyQuartz,reflectivityQuartz,2);
   //mptQuartz->AddProperty("FASTCOMPONENT",energy,fraction,2);
   //mptQuartz->AddProperty("ABSLENGTH",energy,fraction,2);
   //mptQuartz->AddConstProperty("FASTCOMPONENT",38000./MeV);
@@ -211,41 +216,36 @@ void MyDetectorConstruction::DefineMaterials()
 }
 
 
-void MyDetectorConstruction::ConstructCherenkov()
-{
-  // here we can construction our aerogel
-  solidRadiator = new G4Box("solidRadiator",0.4*m, 0.4*m, 0.01*m);
-  logicRadiator = new G4LogicalVolume(solidRadiator,Aerogel,"logicRadiator");
-  physRadiator = new G4PVPlacement(0, G4ThreeVector(0.,0.,0.25*m),logicRadiator,"physRadiator", logicWorld, false, 0, true);
-  fScoringVolume = logicRadiator;
-
-  // now we will make a sensitive detector
-  solidDetector = new G4Box("solidDetector",xWorld/nRows,yWorld/nCols,0.01*m);
-  logicDetector = new G4LogicalVolume(solidDetector,worldMat,"logicDetector"); // we make it from air but it can still detect photons
-
-  // here we generate many detectors at the same time. The value of rows and
-  // columns is initialized in the header file but can be changed at runtime
-  // by using the commands of the detector class
-  for(G4int i=0; i<nRows; i++)// for loop to produce many detectors
-  {
-    for(G4int j=0; j<nCols; j++)
-    {
-      physDetector = new G4PVPlacement(0,
-                        G4ThreeVector(-0.5*m+(i+0.5)*m/nRows,-0.5*m+(j+0.5)*m/nCols,0.49*m),
-                        logicDetector,
-                        "physDetector",
-                        logicWorld,
-                        false,
-                        j+i*nCols, // this part gives a unique identity to each detector and is important for repeated devices
-                        true);
-    }
-  }
-}
-
-
 
 void MyDetectorConstruction::ConstructScintillator()
 {
+
+  G4double scinthousing_xsize = 7.*cm;
+  G4double scinthousing_ysize = 7.*cm;
+  G4double scinthousing_zsize = 0.5*cm;
+  G4double scinthousing_xpos = 0.*cm;
+  G4double scinthousing_ypos = 0.*cm;
+  G4double scinthousing_zpos = 0.*cm;
+
+  solidScintHousing = new G4Box("solidScintHousing",scinthousing_xsize/2.,scinthousing_ysize/2.,scinthousing_zsize/2.);
+  logicScintHousing = new G4LogicalVolume(solidScintHousing,Aluminum,"logicalScintHousing");
+  physScintHousing  = new G4PVPlacement(0,G4ThreeVector(scinthousing_xpos,scinthousing_ypos,scinthousing_zpos),
+                                       logicScintHousing,"physScintHousing",logicWorld,false,0,true);
+
+
+  G4double quartzWindow_xsize = 6.5*cm;
+  G4double quartzWindow_ysize = 6.5*cm;
+  G4double quartzWindow_zsize = 0.1*cm;
+  G4double quartzWindow_xpos = 0.*cm;
+  G4double quartzWindow_ypos = 0.*cm;
+  G4double quartzWindow_zpos = -0.2*cm;
+
+  solidQuartzWindow = new G4Box("solidQuartzWindow",quartzWindow_xsize/2.,quartzWindow_ysize/2.,quartzWindow_zsize/2.);
+  logicQuartzWindow = new G4LogicalVolume(solidQuartzWindow,Quartz,"logicQuartzWindow");
+  physQuartzWindow  = new G4PVPlacement(0,G4ThreeVector(quartzWindow_xpos,quartzWindow_ypos,quartzWindow_zpos),
+                                      logicQuartzWindow,"physQuartzWindow",logicScintHousing,false,0,true);
+
+
   G4double cebr_xpos = 0.*cm;
   G4double cebr_ypos = 0.*cm;
   G4double cebr_zpos = 0.*cm;
@@ -256,12 +256,14 @@ void MyDetectorConstruction::ConstructScintillator()
   G4double pspmt_cath_xsize = 0.3*cm;
   G4double pspmt_cath_ysize = 0.3*cm;
   G4double pspmt_cath_zsize = 0.1*cm;
-  
-  
+
+
   solidScintillator = new G4Box("solidScintillator",cebr_xsize/2,cebr_ysize/2,cebr_zsize/2);
-  logicScintillator = new G4LogicalVolume(solidScintillator, NaI, "logicalScintillator");
-  //G4LogicalSkinSurface *skin = new G4LogicalSkinSurface("skin",logicWorld,mirrorSurface);
-  physScintillator = new G4PVPlacement(0,G4ThreeVector(cebr_xpos,cebr_ypos,cebr_zpos),logicScintillator,"physScintillator",logicWorld, false, 0, true);
+  logicScintillator = new G4LogicalVolume(solidScintillator,CeBr3,"logicalScintillator");
+  //G4LogicalSkinSurface *skin = new G4LogicalSkinSurface("skin",
+  //                                    logicWorld,mirrorSurface);
+  physScintillator = new G4PVPlacement(0,G4ThreeVector(cebr_xpos,cebr_ypos,cebr_zpos),
+                                       logicScintillator,"physScintillator",logicScintHousing, false, 0, true);
 
   // PMT glass window dimensions
   G4double pmt_winX1 = 51.8*mm;
@@ -271,21 +273,24 @@ void MyDetectorConstruction::ConstructScintillator()
   G4double pmt_winZ  =  2.0*mm;
   solidPMTWindow = new G4Trd("solidPMTWindow",pmt_winX1/2.,pmt_winX2/2.,pmt_winY1/2.,pmt_winY2/2.,pmt_winZ/2.);
   logicPMTWindow = new G4LogicalVolume(solidPMTWindow,Borosilicate,"logicPMTWindow");
-  physPMTWindow = new G4PVPlacement(0,G4ThreeVector(0,0,cebr_zpos-cebr_zsize/2.-pmt_winZ/2.),logicPMTWindow,"physPMTWindow",logicWorld,false,0,true);
+  physPMTWindow = new G4PVPlacement(0,G4ThreeVector(0,0,-pmt_winZ/2.-scinthousing_zsize/2.),
+                                    logicPMTWindow,"physPMTWindow",logicWorld,false,0,true);
 
 
 
   G4int pspmt_xn=16;
   G4int pspmt_yn=16;
-  solidDetector = new G4Box("solidDetector", pspmt_cath_xsize/2,pspmt_cath_ysize/2,pspmt_cath_zsize/2);
-  logicDetector = new G4LogicalVolume(solidDetector, worldMat, "logicDetector");  
+  solidDetector = new G4Box("solidDetector",pspmt_cath_xsize/2,pspmt_cath_ysize/2,pspmt_cath_zsize/2);
+  logicDetector = new G4LogicalVolume(solidDetector,worldMat,
+                                      "logicDetector");  
   for(G4int j=0; j<pspmt_yn; j++){
     for(G4int i=0; i<pspmt_xn; i++){
 
-      physDetector = new G4PVPlacement(0,
-                        G4ThreeVector(-pspmt_xn*pspmt_cath_xsize/2+pspmt_cath_xsize/2+i*pspmt_cath_xsize,
-                                      -pspmt_yn*pspmt_cath_ysize/2+pspmt_cath_ysize/2+j*pspmt_cath_ysize,
-                                      -pmt_winZ/2.+pspmt_cath_zsize/2.),logicDetector,"physDetector",logicPMTWindow, false, 0, true);
+      physDetector = new G4PVPlacement(0,G4ThreeVector(
+                                        -pspmt_xn*pspmt_cath_xsize/2+pspmt_cath_xsize/2+i*pspmt_cath_xsize,            
+                                        -pspmt_yn*pspmt_cath_ysize/2+pspmt_cath_ysize/2+j*pspmt_cath_ysize,
+                                        -pmt_winZ/2.+pspmt_cath_zsize/2.),logicDetector,"physDetector",
+                                        logicPMTWindow,false,0,true);
     }
   }
 
@@ -296,12 +301,48 @@ void MyDetectorConstruction::ConstructScintillator()
 }
 
 
+
+
+void MyDetectorConstruction::ConstructCherenkov()
+{
+  // here we can construction our aerogel
+  solidRadiator = new G4Box("solidRadiator",0.4*m, 0.4*m, 0.01*m);
+  logicRadiator = new G4LogicalVolume(solidRadiator,Aerogel,"logicRadiator");
+  physRadiator = new G4PVPlacement(0, G4ThreeVector(0.,0.,0.25*m),logicRadiator,"physRadiator",logicWorld, 
+                                   false,0,true);
+
+  fScoringVolume = logicRadiator;
+
+  // now we will make a sensitive detector
+  solidDetector = new G4Box("solidDetector",xWorld/nRows,yWorld/nCols,0.01*m);
+  logicDetector = new G4LogicalVolume(solidDetector,worldMat,"logicDetector");
+
+  // here we generate many detectors at the same time. The value of rows and
+  // columns is initialized in the header file but can be changed at runtime
+  // by using the commands of the detector class
+  for(G4int i=0; i<nRows; i++){// for loop to produce many detectors
+    for(G4int j=0; j<nCols; j++){
+      physDetector = new G4PVPlacement(0,
+                        G4ThreeVector(-0.5*m+(i+0.5)*m/nRows,-0.5*m+(j+0.5)*m/nCols,0.49*m),logicDetector,
+                        "physDetector",logicWorld,false,j+i*nCols,true);
+
+    }
+  }
+}
+
+
+
+
+
+
 void MyDetectorConstruction::ConstructTOF()
 {
   solidDetector = new G4Box("solidDetector",1.*m,1.*m,0.1*m);
   logicDetector = new G4LogicalVolume(solidDetector, worldMat,"logicDetector");
-  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m,-4.*m),logicDetector,"physDetector",logicWorld,false,0,true);
-  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m, 3.*m),logicDetector,"physDetector",logicWorld,false,1,true);
+  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m,-4.*m),logicDetector,"physDetector",logicWorld,
+                                   false,0,true);
+  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m, 3.*m),logicDetector,"physDetector",logicWorld,
+                                   false,1,true);
 }
 
 
@@ -344,8 +385,8 @@ void MyDetectorConstruction::VisAttributes()
   scint_va->SetForceSolid(true);
   logicScintillator->SetVisAttributes(scint_va);
 
-  G4VisAttributes *photocath_va = new G4VisAttributes(G4Color(1.0,0.6,0.4,0.5));
-  photocath_va->SetForceSolid(true);
+  G4VisAttributes *photocath_va = new G4VisAttributes(G4Color(1.0,0.6,0.4,1));
+  //photocath_va->SetForceSolid(true);
   logicDetector->SetVisAttributes(photocath_va);
 
   G4VisAttributes *PMTglass_va = new G4VisAttributes(G4Color(1.0,1.0,1.0,0.2));
