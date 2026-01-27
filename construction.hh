@@ -7,6 +7,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4Box.hh"
 #include "G4Tubs.hh"
+#include "G4Trd.hh"
 #include "G4PVPlacement.hh"
 #include "G4NistManager.hh"
 #include "G4SystemOfUnits.hh"
@@ -31,17 +32,20 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
     virtual G4VPhysicalVolume *Construct(); // this is the main function that constructs the detector geometry
 
   private:
-    G4Box *solidWorld, *solidRadiator, *solidDetector,*solidScintillator;
+    G4Box *solidWorld, *solidRadiator, *solidDetector,*solidScintillator,
+          *solidScintHousing,*solidQuartzWindow;
+    G4Trd *solidPMTWindow;
     G4LogicalVolume *logicWorld, *logicRadiator, *logicDetector, 
-                    *logicScintillator;
+                    *logicScintillator,*logicPMTWindow,*logicScintHousing,*logicQuartzWindow;
     G4VPhysicalVolume *physWorld, *physRadiator, *physDetector, 
-                      *physScintillator;
+                      *physScintillator,*physPMTWindow,*physScintHousing,*physQuartzWindow;
     G4int nCols,nRows;
 
     G4OpticalSurface *mirrorSurface;
 
     // material definitions
-    G4Material *SiO2, *H2O, *Aerogel, *worldMat, *NaI, *CeBr3, *Quartz, *Si;
+    G4Material *SiO2, *H2O, *Aerogel, *worldMat, *NaI, *CeBr3, *Quartz,
+      *Si, *Borosilicate, *B2O3, *Na2O, *Al2O3, *CaO, *Bialkali, *Aluminum;
     G4Element *C, *Na, *I;
 
     G4GenericMessenger *fMessenger;
