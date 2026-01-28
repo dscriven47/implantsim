@@ -21,6 +21,7 @@ class MyEventAction : public G4UserEventAction
 
   private:
     G4double fEdep;
+    G4double fE;
 };
 
 #endif

@@ -3,6 +3,7 @@
 MyEventAction::MyEventAction(MyRunAction*)
 {
   fEdep = 0.;
+  fE = 0.;
 }
 
 MyEventAction::~MyEventAction()
@@ -11,6 +12,7 @@ MyEventAction::~MyEventAction()
 void MyEventAction::BeginOfEventAction(const G4Event*)
 {
   fEdep = 0.;
+  fE = 0.;
 }
 
 void MyEventAction::EndOfEventAction(const G4Event*)
@@ -20,6 +22,6 @@ void MyEventAction::EndOfEventAction(const G4Event*)
   G4AnalysisManager *man = G4AnalysisManager::Instance();
 
   man->FillNtupleDColumn(2,0,fEdep);
-
+  //man->FillNtupleDColumn(,,fE);
   man->AddNtupleRow(2);
 }

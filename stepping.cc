@@ -22,4 +22,7 @@ void MySteppingAction::UserSteppingAction(const G4Step *step)
 
   G4double edep = step->GetTotalEnergyDeposit();
   fEventAction->AddEdep(edep);
+
+
+  // here we can add the smearing... need to get profile for CeBr resolution as function of E....
 }
