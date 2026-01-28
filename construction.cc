@@ -221,8 +221,8 @@ void MyDetectorConstruction::DefineMaterials()
 void MyDetectorConstruction::ConstructScintillator()
 {
 
-  G4double scinthousing_xsize = 7.*cm;
-  G4double scinthousing_ysize = 7.*cm;
+  G4double scinthousing_xsize = 66.5*mm;
+  G4double scinthousing_ysize = 66.5*mm;
   G4double scinthousing_zsize = 0.5*cm;
   G4double scinthousing_xpos = 0.*cm;
   G4double scinthousing_ypos = 0.*cm;
@@ -234,12 +234,12 @@ void MyDetectorConstruction::ConstructScintillator()
                                        logicScintHousing,"physScintHousing",logicWorld,false,0,true);
 
 
-  G4double quartzWindow_xsize = 6.5*cm;
-  G4double quartzWindow_ysize = 6.5*cm;
-  G4double quartzWindow_zsize = 0.1*cm;
+  G4double quartzWindow_xsize = 5.6*cm;
+  G4double quartzWindow_ysize = 5.6*cm;
+  G4double quartzWindow_zsize = 0.5*mm;
   G4double quartzWindow_xpos = 0.*cm;
   G4double quartzWindow_ypos = 0.*cm;
-  G4double quartzWindow_zpos = -0.2*cm;
+  G4double quartzWindow_zpos = -scinthousing_zsize/2 + quartzWindow_zsize/2;
 
   solidQuartzWindow = new G4Box("solidQuartzWindow",quartzWindow_xsize/2.,quartzWindow_ysize/2.,quartzWindow_zsize/2.);
   logicQuartzWindow = new G4LogicalVolume(solidQuartzWindow,Quartz,"logicQuartzWindow");
@@ -249,9 +249,9 @@ void MyDetectorConstruction::ConstructScintillator()
 
   G4double cebr_xpos = 0.*cm;
   G4double cebr_ypos = 0.*cm;
-  G4double cebr_zpos = 0.*cm;
-  G4double cebr_xsize = 6.*cm;
-  G4double cebr_ysize = 6.*cm;
+  G4double cebr_zpos = -quartzWindow_zsize;
+  G4double cebr_xsize = 5.1*cm;
+  G4double cebr_ysize = 5.1*cm;
   G4double cebr_zsize = 0.3*cm;
 
   G4double pspmt_cath_xsize = 0.3*cm;
@@ -278,7 +278,7 @@ void MyDetectorConstruction::ConstructScintillator()
                                     logicPMTWindow,"physPMTWindow",logicWorld,false,0,true);
 
 
-
+  // place the photocathodes
   G4int pspmt_xn=16;
   G4int pspmt_yn=16;
   solidDetector = new G4Box("solidDetector",pspmt_cath_xsize/2,pspmt_cath_ysize/2,pspmt_cath_zsize/2);
@@ -286,7 +286,6 @@ void MyDetectorConstruction::ConstructScintillator()
                                       "logicDetector");  
   for(G4int j=0; j<pspmt_yn; j++){
     for(G4int i=0; i<pspmt_xn; i++){
-
       physDetector = new G4PVPlacement(0,G4ThreeVector(
                                         -pspmt_xn*pspmt_cath_xsize/2+pspmt_cath_xsize/2+i*pspmt_cath_xsize,            
                                         -pspmt_yn*pspmt_cath_ysize/2+pspmt_cath_ysize/2+j*pspmt_cath_ysize,
@@ -296,6 +295,15 @@ void MyDetectorConstruction::ConstructScintillator()
   }
 
   fScoringVolume = logicScintillator;
+
+
+  // place the scintillator frame
+  auto* mountLV = BuildScintillatorMountLV();
+  G4RotationMatrix* scintFrameRot = new G4RotationMatrix();
+  scintFrameRot->rotateX(0*deg);
+  scintFrameRot->rotateY(180*deg);
+  scintFrameRot->rotateZ(0*deg);	
+  new G4PVPlacement(scintFrameRot, G4ThreeVector(0,-2.8*mm,0.25*cm), mountLV, "ScintillatorMountPV", logicWorld, false, 0);
   
  
   VisAttributes();
@@ -391,7 +399,127 @@ void MyDetectorConstruction::VisAttributes()
   logicDetector->SetVisAttributes(photocath_va);
 
   G4VisAttributes *PMTglass_va = new G4VisAttributes(G4Color(1.0,1.0,1.0,0.2));
-  PMTglass_va->SetForceSolid(true);
+  PMTglass_va->SetForceSolid(false);
   logicPMTWindow->SetVisAttributes(PMTglass_va);
 
+
+  G4VisAttributes *quartzWindow_va = new G4VisAttributes(G4Color(0.0,0.7,0.0,0.2));
+  quartzWindow_va->SetForceSolid(false);
+  logicQuartzWindow->SetVisAttributes(quartzWindow_va);
+
+}
+
+G4LogicalVolume* MyDetectorConstruction::BuildScintillatorMountLV()
+{
+const G4double inch = 25.4*mm;
+
+
+// Material (approx): 6061-T6 -> use pure Al for geometry
+auto* nist = G4NistManager::Instance();
+G4Material* mat = nist->FindOrBuildMaterial("G4_Al");
+
+
+// ---- Overall stock ---- (inches)
+const G4double W = 2.900*inch;
+const G4double H = 3.380*inch;
+const G4double T = 0.125*inch;
+
+
+// ---- Through window (rectangular cutout) ----
+// Using x = 0.378 -> 2.523 and y = 0.600 -> 3.000 from the print.
+const G4double win_x0 = 0.25*inch;
+const G4double win_x1 = 2.65*inch;
+const G4double win_y0 = 0.600*inch;
+const G4double win_y1 = 3.000*inch;
+
+
+const G4double winW = (win_x1 - win_x0);
+const G4double winH = (win_y1 - win_y0);
+const G4double winCx = 0.5*(win_x0 + win_x1) - 0.5*W;
+const G4double winCy = 0.5*(win_y0 + win_y1) - 0.5*H;
+
+
+// ---- Front-side pocket (recess) ----
+// Depth = 0.063 into the face (from section view).
+// Using pocket footprint x = 0.250 -> 2.650 and y = 0.490 -> 3.110.
+const G4double pocketDepth = 0.063*inch;
+
+
+const G4double p_x0 = 0.140*inch;
+const G4double p_x1 = 2.760*inch;
+const G4double p_y0 = 0.490*inch;
+const G4double p_y1 = 3.110*inch;
+
+
+const G4double pW = (p_x1 - p_x0);
+const G4double pH = (p_y1 - p_y0);
+const G4double pCx = 0.5*(p_x0 + p_x1) - 0.5*W;
+const G4double pCy = 0.5*(p_y0 + p_y1) - 0.5*H;
+
+
+// ---- 4X Ø0.116 THRU holes ----
+const G4double holeD = 0.116*inch;
+const G4double holeR = 0.5*holeD;
+
+
+// Using hole center coords from the print:
+// x = 0.378 and 2.523 ; y = 0.345 and 3.255
+const G4double hxL = 0.378*inch - 0.5*W;
+const G4double hxR = 2.523*inch - 0.5*W;
+const G4double hyB = 0.345*inch - 0.5*H;
+const G4double hyT = 3.255*inch - 0.5*H;
+
+
+// ---- Base solid: simple rectangular stock ----
+// NOTE: This ignores the outer chamfers/radii (R2.115 TYP) on the drawing.
+auto* plate = new G4Box("CeBrMountPlate", 0.5*W, 0.5*H, 0.5*T);
+
+
+// ---- Subtract the front-side pocket ----
+auto* pocketCut = new G4Box("CeBrPocketCut", 0.5*pW, 0.5*pH, 0.5*pocketDepth);
+
+
+// Put pocket on +Z face (flip sign if your “front” is -Z)
+const G4double zPocket = 0.5*T - 0.5*pocketDepth;
+
+
+auto* s1 = new G4SubtractionSolid("CeBrMinusPocket",
+plate, pocketCut,
+nullptr,
+G4ThreeVector(pCx, pCy, zPocket));
+
+
+// ---- Subtract through window (full thickness) ----
+auto* windowCut = new G4Box("CeBrWindowCut",
+                                            0.5*winW, 0.5*winH, 0.5*(T + 1.0*mm)); // safety margin
+
+
+auto* s2 = new G4SubtractionSolid("CeBrMinusPocketMinusWindow",
+                                                                s1, windowCut,
+                                                                nullptr,
+                                                                G4ThreeVector(winCx, winCy, 0.0));
+
+
+// ---- Subtract the 4 holes ----
+auto* holeCut = new G4Tubs("CeBrHoleCut",
+                            0.0, holeR, 0.5*(T + 1.0*mm),
+                            0.0, 360.0*deg);
+
+
+auto* s3 = new G4SubtractionSolid("CeBrMinusHole1", s2, holeCut, nullptr, G4ThreeVector(hxL, hyB, 0.0));
+auto* s4 = new G4SubtractionSolid("CeBrMinusHole2", s3, holeCut, nullptr, G4ThreeVector(hxR, hyB, 0.0));
+auto* s5 = new G4SubtractionSolid("CeBrMinusHole3", s4, holeCut, nullptr, G4ThreeVector(hxL, hyT, 0.0));
+auto* s6 = new G4SubtractionSolid("CeBrMinusHole4", s5, holeCut, nullptr, G4ThreeVector(hxR, hyT, 0.0));
+
+
+auto* lv = new G4LogicalVolume(s6, mat, "CeBrDetectorMountLV");
+
+
+// Optional vis
+auto* vis = new G4VisAttributes(G4Colour(0.7,0,0));
+vis->SetForceSolid(false);
+lv->SetVisAttributes(vis);
+
+
+return lv;
 }

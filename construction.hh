@@ -15,6 +15,7 @@
 #include "G4VisAttributes.hh"
 #include "G4OpticalSurface.hh"
 #include "G4LogicalSkinSurface.hh"
+#include "G4SubtractionSolid.hh"
 
 #include "detector.hh"
 
@@ -64,6 +65,7 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
     void ConstructTOF();
     virtual void ConstructSDandField();
     void VisAttributes();
+    G4LogicalVolume* BuildScintillatorMountLV();
 };
 
 #endif
