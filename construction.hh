@@ -46,8 +46,9 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
 
     // material definitions
     G4Material *SiO2, *H2O, *Aerogel, *worldMat, *NaI, *CeBr3, *Quartz,
-      *Si, *Borosilicate, *B2O3, *Na2O, *Al2O3, *CaO, *Bialkali, *Aluminum;
-    G4Element *C, *Na, *I;
+      *Si, *Borosilicate, *B2O3, *Na2O, *Al2O3, *CaO, *Bialkali, *Aluminum, *HeavyMet, *PbMat;
+    G4Element *C, *Na, *I, *Pb, *W, *Ni, *Cu;
+    
 
     G4GenericMessenger *fMessenger;
 

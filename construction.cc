@@ -23,7 +23,7 @@ MyDetectorConstruction::MyDetectorConstruction()
   // size of the world volume
   xWorld = 0.08*m;
   yWorld = 0.08*m;
-  zWorld = 0.08*m;
+  zWorld = 0.3*m;
 }
 
 MyDetectorConstruction::~MyDetectorConstruction()
@@ -63,6 +63,14 @@ void MyDetectorConstruction::DefineMaterials()
   CaO = new G4Material("CaO",3.34*g/cm3,2);
   CaO->AddElement(nist->FindOrBuildElement("O"),1);
   CaO->AddElement(nist->FindOrBuildElement("O"),1);
+
+  HeavyMet = new G4Material("HeavyMet",17.0*g/cm3,3);
+  HeavyMet->AddElement(nist->FindOrBuildElement("W"), 90.0*perCent);
+  HeavyMet->AddElement(nist->FindOrBuildElement("Ni"), 6.0*perCent);
+  HeavyMet->AddElement(nist->FindOrBuildElement("Cu"), 4.0*perCent);
+
+  PbMat = new G4Material("PbMat",11.34*g/cm3,1);
+  PbMat->AddElement(nist->FindOrBuildElement("Pb"),1);
 
   // definition for carbon
   C = nist->FindOrBuildElement("C");
@@ -156,7 +164,7 @@ void MyDetectorConstruction::DefineMaterials()
 
   G4MaterialPropertiesTable *mptQuartz = new G4MaterialPropertiesTable();
   mptQuartz->AddProperty("RINDEX",energyQuartz,rindexQuartz,2);
-  //mptQuartz->AddProperty("REFLECTIVITY",energyQuartz,reflectivityQuartz,2);
+  mptQuartz->AddProperty("REFLECTIVITY",energyQuartz,reflectivityQuartz,2);
   //mptQuartz->AddProperty("FASTCOMPONENT",energy,fraction,2);
   //mptQuartz->AddProperty("ABSLENGTH",energy,fraction,2);
   //mptQuartz->AddConstProperty("FASTCOMPONENT",38000./MeV);
@@ -236,7 +244,7 @@ void MyDetectorConstruction::ConstructScintillator()
 
   G4double quartzWindow_xsize = 5.6*cm;
   G4double quartzWindow_ysize = 5.6*cm;
-  G4double quartzWindow_zsize = 0.5*mm;
+  G4double quartzWindow_zsize = 1.0*mm;
   G4double quartzWindow_xpos = 0.*cm;
   G4double quartzWindow_ypos = 0.*cm;
   G4double quartzWindow_zpos = -scinthousing_zsize/2 + quartzWindow_zsize/2;
@@ -249,7 +257,7 @@ void MyDetectorConstruction::ConstructScintillator()
 
   G4double cebr_xpos = 0.*cm;
   G4double cebr_ypos = 0.*cm;
-  G4double cebr_zpos = -quartzWindow_zsize;
+  G4double cebr_zpos = 0.*cm;
   G4double cebr_xsize = 5.1*cm;
   G4double cebr_ysize = 5.1*cm;
   G4double cebr_zsize = 0.3*cm;
@@ -295,6 +303,18 @@ void MyDetectorConstruction::ConstructScintillator()
   }
 
   fScoringVolume = logicScintillator;
+
+  // build Pb Collimator
+  G4double pbColRMin = 0.2*cm;
+  G4double pbColRMax = 5.0*cm;
+  G4double pbColZ    = 7.0*cm;
+  G4double pbX = 0.*cm;
+  G4double pbY = 0.*cm;
+  G4double pbZ = 10.*cm;
+
+  //G4Tubs *pbTub = new G4Tubs("pbTub",pbColRMin,pbColRMax,pbColZ,0.*deg,360.*deg);
+  //G4LogicalVolume *pbLogic = new G4LogicalVolume(pbTub,PbMat,"pbLogic");
+  //G4PVPlacement *pbPhys = new G4PVPlacement(0,G4ThreeVector(pbX,pbY,pbZ),pbLogic,"pbPhys",logicWorld,false,0,true);
 
 
   // place the scintillator frame
@@ -390,21 +410,25 @@ void MyDetectorConstruction::ConstructSDandField()
 
 void MyDetectorConstruction::VisAttributes()
 {
-  G4VisAttributes *scint_va = new G4VisAttributes(G4Color(0.4,0.4,0.8,0.2));
+  G4VisAttributes *scint_va = new G4VisAttributes(G4Color(0.8,0.1,0.5,0.5));
   scint_va->SetForceSolid(true);
+  scint_va->SetForceWireframe(true);
   logicScintillator->SetVisAttributes(scint_va);
 
   G4VisAttributes *photocath_va = new G4VisAttributes(G4Color(1.0,0.6,0.4,1));
   //photocath_va->SetForceSolid(true);
+  photocath_va->SetForceWireframe(true);
   logicDetector->SetVisAttributes(photocath_va);
 
-  G4VisAttributes *PMTglass_va = new G4VisAttributes(G4Color(1.0,1.0,1.0,0.2));
+  G4VisAttributes *PMTglass_va = new G4VisAttributes(G4Color(1.0,1.0,1.0,0.5));
   PMTglass_va->SetForceSolid(false);
+  PMTglass_va->SetForceWireframe(true);
   logicPMTWindow->SetVisAttributes(PMTglass_va);
 
 
-  G4VisAttributes *quartzWindow_va = new G4VisAttributes(G4Color(0.0,0.7,0.0,0.2));
-  quartzWindow_va->SetForceSolid(false);
+  G4VisAttributes *quartzWindow_va = new G4VisAttributes(G4Color(0.0,0.0,0.5,0.5));
+  quartzWindow_va->SetForceSolid(true);
+  quartzWindow_va->SetForceWireframe(true);
   logicQuartzWindow->SetVisAttributes(quartzWindow_va);
 
 }

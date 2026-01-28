@@ -34,7 +34,7 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
 {
   // You can switch behavior with:
   //   SetSourceMode("Ba133");
-     SetSourceMode("gamma");   SetKineticEnergy(200.*keV);  // example line
+     SetSourceMode("gamma");   SetKineticEnergy(1000.*keV);  // example line
   //   SetSourceMode("neutron"); SetKineticEnergy(1.*MeV);
   //   SetSourceMode("alpha");   SetKineticEnergy(5.*MeV);
 
@@ -86,7 +86,7 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
 
   // set beam control
   fConeAxis = G4ThreeVector(0., 0., -1.);
-  fConeAngle = 180.*deg;
+  fConeAngle = 20.*deg;
   fConeApexRadius = 0.*cm;
 
   // Generate random direction within the cone
@@ -101,7 +101,7 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
   G4ThreeVector randomDirection = G4ThreeVector(x,y,z).rotateUz(fConeAxis);
 
   // Generate random position within the apex radius (if non-zero)
-  G4ThreeVector sourcePosition = G4ThreeVector(0.,0.,0.*m);
+  G4ThreeVector sourcePosition = G4ThreeVector(0.,0.,2.*cm);
 
   if (fConeApexRadius > 0.) {
     G4double radius = fConeApexRadius * std::sqrt(G4UniformRand());
