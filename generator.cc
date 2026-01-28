@@ -34,7 +34,7 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
 {
   // You can switch behavior with:
   //   SetSourceMode("Ba133");
-     SetSourceMode("gamma");   SetKineticEnergy(1000.*keV);  // example line
+     SetSourceMode("gamma");   SetKineticEnergy(50*keV);  // example line
   //   SetSourceMode("neutron"); SetKineticEnergy(1.*MeV);
   //   SetSourceMode("alpha");   SetKineticEnergy(5.*MeV);
 

@@ -23,6 +23,7 @@ MyRunAction::MyRunAction()
 
   man->CreateNtuple("Scoring","Scoring");
   man->CreateNtupleDColumn("fEdep");
+  man->CreateNtupleDColumn("fE");
   man->FinishNtuple(2);
 
 }
@@ -39,7 +40,7 @@ void MyRunAction::BeginOfRunAction(const G4Run* run)
   std::stringstream strRunID;
   strRunID << runID;
 
-  man->OpenFile("examplesim-output_run" + strRunID.str() + ".root");
+  man->OpenFile("implantsim-output_run" + strRunID.str() + ".root");
 
 }
 

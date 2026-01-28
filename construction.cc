@@ -148,6 +148,7 @@ void MyDetectorConstruction::DefineMaterials()
   mptCeBr3->AddProperty("FASTCOMPONENT",energyCeBr3,fractionCeBr3,2);
   //mptCeBr3->AddProperty("ABSLENGTH",energy,fraction,2);
   mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
+  //mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",0./MeV);
   mptCeBr3->AddConstProperty("RESOLUTIONSCALE",1.0);
   mptCeBr3->AddConstProperty("FASTTIMECONSTANT",20*ns);
   mptCeBr3->AddConstProperty("YIELDRATIO",1.);
@@ -240,6 +241,8 @@ void MyDetectorConstruction::ConstructScintillator()
   logicScintHousing = new G4LogicalVolume(solidScintHousing,Aluminum,"logicalScintHousing");
   physScintHousing  = new G4PVPlacement(0,G4ThreeVector(scinthousing_xpos,scinthousing_ypos,scinthousing_zpos),
                                        logicScintHousing,"physScintHousing",logicWorld,false,0,true);
+  G4LogicalSkinSurface *skin = new G4LogicalSkinSurface("skinScintHousing",
+                                      logicScintHousing,mirrorSurface);
 
 
   G4double quartzWindow_xsize = 5.6*cm;
@@ -305,12 +308,12 @@ void MyDetectorConstruction::ConstructScintillator()
   fScoringVolume = logicScintillator;
 
   // build Pb Collimator
-  G4double pbColRMin = 0.2*cm;
-  G4double pbColRMax = 5.0*cm;
-  G4double pbColZ    = 7.0*cm;
-  G4double pbX = 0.*cm;
-  G4double pbY = 0.*cm;
-  G4double pbZ = 10.*cm;
+  //G4double pbColRMin = 0.2*cm;
+  //G4double pbColRMax = 5.0*cm;
+  //G4double pbColZ    = 7.0*cm;
+  //G4double pbX = 0.*cm;
+  //G4double pbY = 0.*cm;
+  //G4double pbZ = 10.*cm;
 
   //G4Tubs *pbTub = new G4Tubs("pbTub",pbColRMin,pbColRMax,pbColZ,0.*deg,360.*deg);
   //G4LogicalVolume *pbLogic = new G4LogicalVolume(pbTub,PbMat,"pbLogic");
@@ -444,9 +447,9 @@ G4Material* mat = nist->FindOrBuildMaterial("G4_Al");
 
 
 // ---- Overall stock ---- (inches)
-const G4double W = 2.900*inch;
-const G4double H = 3.380*inch;
-const G4double T = 0.125*inch;
+const G4double frameW = 2.900*inch;
+const G4double frameH = 3.380*inch;
+const G4double frameT = 0.125*inch;
 
 
 // ---- Through window (rectangular cutout) ----
@@ -459,8 +462,8 @@ const G4double win_y1 = 3.000*inch;
 
 const G4double winW = (win_x1 - win_x0);
 const G4double winH = (win_y1 - win_y0);
-const G4double winCx = 0.5*(win_x0 + win_x1) - 0.5*W;
-const G4double winCy = 0.5*(win_y0 + win_y1) - 0.5*H;
+const G4double winCx = 0.5*(win_x0 + win_x1) - 0.5*frameW;
+const G4double winCy = 0.5*(win_y0 + win_y1) - 0.5*frameH;
 
 
 // ---- Front-side pocket (recess) ----
@@ -477,8 +480,8 @@ const G4double p_y1 = 3.110*inch;
 
 const G4double pW = (p_x1 - p_x0);
 const G4double pH = (p_y1 - p_y0);
-const G4double pCx = 0.5*(p_x0 + p_x1) - 0.5*W;
-const G4double pCy = 0.5*(p_y0 + p_y1) - 0.5*H;
+const G4double pCx = 0.5*(p_x0 + p_x1) - 0.5*frameW;
+const G4double pCy = 0.5*(p_y0 + p_y1) - 0.5*frameH;
 
 
 // ---- 4X Ø0.116 THRU holes ----
@@ -488,15 +491,15 @@ const G4double holeR = 0.5*holeD;
 
 // Using hole center coords from the print:
 // x = 0.378 and 2.523 ; y = 0.345 and 3.255
-const G4double hxL = 0.378*inch - 0.5*W;
-const G4double hxR = 2.523*inch - 0.5*W;
-const G4double hyB = 0.345*inch - 0.5*H;
-const G4double hyT = 3.255*inch - 0.5*H;
+const G4double hxL = 0.378*inch - 0.5*frameW;
+const G4double hxR = 2.523*inch - 0.5*frameW;
+const G4double hyB = 0.345*inch - 0.5*frameH;
+const G4double hyT = 3.255*inch - 0.5*frameH;
 
 
 // ---- Base solid: simple rectangular stock ----
 // NOTE: This ignores the outer chamfers/radii (R2.115 TYP) on the drawing.
-auto* plate = new G4Box("CeBrMountPlate", 0.5*W, 0.5*H, 0.5*T);
+auto* plate = new G4Box("CeBrMountPlate", 0.5*frameW, 0.5*frameH, 0.5*frameT);
 
 
 // ---- Subtract the front-side pocket ----
@@ -504,7 +507,7 @@ auto* pocketCut = new G4Box("CeBrPocketCut", 0.5*pW, 0.5*pH, 0.5*pocketDepth);
 
 
 // Put pocket on +Z face (flip sign if your “front” is -Z)
-const G4double zPocket = 0.5*T - 0.5*pocketDepth;
+const G4double zPocket = 0.5*frameT - 0.5*pocketDepth;
 
 
 auto* s1 = new G4SubtractionSolid("CeBrMinusPocket",
@@ -515,7 +518,7 @@ G4ThreeVector(pCx, pCy, zPocket));
 
 // ---- Subtract through window (full thickness) ----
 auto* windowCut = new G4Box("CeBrWindowCut",
-                                            0.5*winW, 0.5*winH, 0.5*(T + 1.0*mm)); // safety margin
+                                            0.5*winW, 0.5*winH, 0.5*(frameT + 1.0*mm)); // safety margin
 
 
 auto* s2 = new G4SubtractionSolid("CeBrMinusPocketMinusWindow",
@@ -526,7 +529,7 @@ auto* s2 = new G4SubtractionSolid("CeBrMinusPocketMinusWindow",
 
 // ---- Subtract the 4 holes ----
 auto* holeCut = new G4Tubs("CeBrHoleCut",
-                            0.0, holeR, 0.5*(T + 1.0*mm),
+                            0.0, holeR, 0.5*(frameT + 1.0*mm),
                             0.0, 360.0*deg);
 
 
