@@ -1,5 +1,9 @@
 #include "run.hh"
 
+#include <fstream>
+#include <sstream>
+#include <string>
+
 MyRunAction::MyRunAction()
 {
 
@@ -33,16 +37,31 @@ MyRunAction::~MyRunAction()
 
 void MyRunAction::BeginOfRunAction(const G4Run* run)
 {
-  G4AnalysisManager *man = G4AnalysisManager::Instance();
-
+  G4AnalysisManager* man = G4AnalysisManager::Instance();
+  
   G4int runID = run->GetRunID();
-
-  std::stringstream strRunID;
-  strRunID << runID;
-
-  man->OpenFile("implantsim-output_run" + strRunID.str() + ".root");
-
+  G4int tryRunID = runID;
+  
+  std::string filename;
+  
+  while (true) {
+  std::stringstream ss;
+  ss << "implantsim-output_run" << tryRunID << ".root";
+  
+  std::ifstream f(ss.str().c_str());
+  if (!f.good()) {
+  filename = ss.str();
+  break;
+  }
+  
+  ++tryRunID; // <-- bump run number
+  }
+  
+  man->OpenFile(filename);
+  
+  G4cout << "Writing output to: " << filename << G4endl;
 }
+
 
 void MyRunAction::EndOfRunAction(const G4Run*)
 {

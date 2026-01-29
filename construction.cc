@@ -147,8 +147,8 @@ void MyDetectorConstruction::DefineMaterials()
   mptCeBr3->AddProperty("RINDEX",energyCeBr3,rindexCeBr3,2);
   mptCeBr3->AddProperty("FASTCOMPONENT",energyCeBr3,fractionCeBr3,2);
   //mptCeBr3->AddProperty("ABSLENGTH",energy,fraction,2);
-  mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
-  //mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",0./MeV);
+  //mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
+  mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",0./MeV);
   mptCeBr3->AddConstProperty("RESOLUTIONSCALE",1.0);
   mptCeBr3->AddConstProperty("FASTTIMECONSTANT",20*ns);
   mptCeBr3->AddConstProperty("YIELDRATIO",1.);
