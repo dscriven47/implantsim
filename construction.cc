@@ -142,12 +142,13 @@ void MyDetectorConstruction::DefineMaterials()
   G4double rindexCeBr3[2] = {2.09,2.09};
   //G4double reflectivityCeBr3[2] = {1.0,1.0};
   G4double fractionCeBr3[2] = {1.0,1.0}; // fast component spectrum
+  G4double abslengthCeBr3[2] = {2.1*cm,2.1*cm};
 
   G4MaterialPropertiesTable *mptCeBr3 = new G4MaterialPropertiesTable();
   mptCeBr3->AddProperty("RINDEX",energyCeBr3,rindexCeBr3,2);
   mptCeBr3->AddProperty("FASTCOMPONENT",energyCeBr3,fractionCeBr3,2);
-  //mptCeBr3->AddProperty("ABSLENGTH",energy,fraction,2);
-  //mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
+  mptCeBr3->AddProperty("ABSLENGTH",energyCeBr3,abslengthCeBr3,2);
+  mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",66000./MeV);
   mptCeBr3->AddConstProperty("SCINTILLATIONYIELD",0./MeV);
   mptCeBr3->AddConstProperty("RESOLUTIONSCALE",1.0);
   mptCeBr3->AddConstProperty("FASTTIMECONSTANT",20*ns);
