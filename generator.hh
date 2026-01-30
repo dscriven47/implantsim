@@ -11,34 +11,39 @@
 #include "G4String.hh"
 #include "globals.hh"
 
+
+class G4ParticleGun;
+class G4GenericMessenger;
 class MyPrimaryGenerator : public G4VUserPrimaryGeneratorAction
 {
 public:
-MyPrimaryGenerator();
-~MyPrimaryGenerator() override;
+  MyPrimaryGenerator();
+  ~MyPrimaryGenerator() override;
 
+  void GeneratePrimaries(G4Event* anEvent) override;
 
-void GeneratePrimaries(G4Event* anEvent) override;
+  // setters used by messenger
+  void SetSourceMode(const G4String& mode) { fSourceMode = mode; }
+  void SetKineticEnergy(G4double e) { fKineticEnergy = e; }
 
-
-// Choose what to generate: "Ba133", "gamma", "neutron", "alpha"
-void SetSourceMode(const G4String& mode) { fSourceMode = mode; }
-
-
-// Optional: set kinetic energy for particle sources (gamma/neutron/alpha)
-void SetKineticEnergy(G4double ekin) { fKineticEnergy = ekin; }
-
+  // optional getters (useful for RunAction filenames)
+  const G4String& GetSourceMode() const { return fSourceMode; }
+  G4double GetKineticEnergy() const { return fKineticEnergy; }
 
 private:
-G4ParticleGun* fParticleGun = nullptr;
-G4ThreeVector fConeAxis;
-G4double fConeAngle;
-G4double fConeApexRadius;
-G4String fParticleName;
+  void DefineCommands();
 
+  G4ParticleGun* fParticleGun = nullptr;
+  G4GenericMessenger* fMessenger = nullptr;
 
-G4String fSourceMode = "gamma"; // default behavior
-G4double fKineticEnergy = 100.*keV; // used for gamma/neutron/alpha
+  // Macro-controlled parameters:
+  G4String fSourceMode = "electron";
+  G4double fKineticEnergy = 1500.0; // will set to MeV units in ctor
+
+  // Your beam controls (optional to macro-control later)
+  G4ThreeVector fConeAxis;
+  G4double fConeAngle = 180.0;
+  G4double fConeApexRadius = 3.0;
 };
 
 
