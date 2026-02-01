@@ -40,6 +40,9 @@ private:
   G4String fSourceMode = "electron";
   G4double fKineticEnergy = 1500.0; // will set to MeV units in ctor
 
+  //
+  G4String fGunType = "point";
+
   // Your beam controls (optional to macro-control later)
   G4ThreeVector fConeAxis;
   G4double fConeAngle = 180.0;

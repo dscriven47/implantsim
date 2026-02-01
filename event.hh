@@ -17,7 +17,10 @@ class MyEventAction : public G4UserEventAction
     virtual void BeginOfEventAction(const G4Event*);
     virtual void EndOfEventAction(const G4Event*);
 
+    double SmearEnergy(double E_keV);
+
     void AddEdep(G4double edep) { fEdep += edep; }
+
 
   private:
     G4double fEdep;
