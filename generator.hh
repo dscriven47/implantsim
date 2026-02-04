@@ -25,10 +25,14 @@ public:
   // setters used by messenger
   void SetSourceMode(const G4String& mode) { fSourceMode = mode; }
   void SetKineticEnergy(G4double e) { fKineticEnergy = e; }
+  void SetSourcePosition(G4ThreeVector sourcePosition) { fSourcePosition=sourcePosition; }
+  void SetSourceDirection(G4ThreeVector sourceDirection) { fSourceDirection=sourceDirection; }
 
   // optional getters (useful for RunAction filenames)
   const G4String& GetSourceMode() const { return fSourceMode; }
   G4double GetKineticEnergy() const { return fKineticEnergy; }
+  G4ThreeVector GetSourcePosition() const { return fSourcePosition; }
+  G4ThreeVector GetSourceDirection() const { return fSourceDirection; }
 
 private:
   void DefineCommands();
@@ -36,18 +40,26 @@ private:
   G4ParticleGun* fParticleGun = nullptr;
   G4GenericMessenger* fMessenger = nullptr;
 
-  // Macro-controlled parameters:
+  // Macro-controlled parameters
   G4String fSourceMode = "electron";
-  G4double fKineticEnergy = 1500.0; // will set to MeV units in ctor
+  G4double fKineticEnergy = 50.0;
+  G4ThreeVector fSourcePosition = G4ThreeVector(0.,0.,1.*cm);
+  G4ThreeVector fSourceDirection = G4ThreeVector(0.,0.,1.);
 
-  //
+  // definition for gun type
   G4String fGunType = "point";
 
-  // Your beam controls (optional to macro-control later)
-  G4ThreeVector fConeAxis;
-  G4double fConeAngle = 180.0;
-  G4double fConeApexRadius = 3.0;
+  // beam controls
+  G4ThreeVector fConeAxis = G4ThreeVector(0., 0., -1.);
+  G4double fConeAngle = 180.0*deg;
+  G4double fConeApexRadius = 3.0*cm;
+
+  // stuff to sample position
+  G4double SampleImplantDepth();
+  std::vector<G4double> fX;
+  std::vector<G4double> fCDF;
 };
+
 
 
 #endif

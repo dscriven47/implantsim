@@ -15,6 +15,7 @@
 #include "G4GenericMessenger.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
+#include "G4ios.hh"
 #include <cmath>
 
 MyPrimaryGenerator::MyPrimaryGenerator()
@@ -25,13 +26,21 @@ MyPrimaryGenerator::MyPrimaryGenerator()
   fParticleGun->SetParticleDefinition(G4Geantino::Geantino());
 
   // Default macro-controlled values (set ONCE, not per event)
-  fSourceMode    = "Ba133";
-  fKineticEnergy = 1500.0 * keV;
+  fSourceMode    = "gamma";
+  fKineticEnergy = 75.0 * keV;
+  fGunType = "gaussian";
 
-  // Default beam controls (you can also expose these later)
-  fConeAxis       = G4ThreeVector(0., 0., -1.);
-  fConeAngle      = 180.*deg;
-  fConeApexRadius = 0.*cm;
+
+  // read the implant profile PDF
+  std::ifstream infile("implant_depth_cdf.txt");
+  G4double x, cdf;
+  while (infile >> x >> cdf)
+  {
+    fX.push_back(x * mm);   // apply units HERE
+    fCDF.push_back(cdf);
+  }
+  infile.close();
+
 
   DefineCommands();
 }
@@ -118,31 +127,39 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     fParticleGun->SetParticleCharge(0.*eplus);
     fParticleGun->SetParticleEnergy(0.*keV);
   }
+  
+  
+  // point source
+  if(fGunType == "point")
+  {
+    SetSourceDirection(G4ThreeVector(0.,0.,-1.));
+    SetSourcePosition(G4ThreeVector(0.,0.,1.*cm));
+  }
 
 
-  if(fGunType == "cone"){
-    // --- your cone direction sampling (unchanged) ---
+  // conical source
+  else if(fGunType == "cone"){
     G4double cosTheta = std::cos(fConeAngle);
     G4double z = G4UniformRand() * (1. - cosTheta) + cosTheta;
     G4double phi = G4UniformRand() * 2. * M_PI;
     G4double r = std::sqrt(1. - z * z);
     G4double x = r * std::cos(phi);
     G4double y = r * std::sin(phi);
+    
+    G4ThreeVector sourcePosition = G4ThreeVector(0.,0.,1.*cm);
 
-    G4ThreeVector randomDirection = G4ThreeVector(x,y,z).rotateUz(fConeAxis);
-
-    G4ThreeVector sourcePosition(0.,0.,1.*cm);
-    if (fConeApexRadius > 0.) {
+    if(fConeApexRadius > 0.) 
+    {
       G4double radius = fConeApexRadius * std::sqrt(G4UniformRand());
       G4double theta = G4UniformRand() * 2. * M_PI;
       sourcePosition = G4ThreeVector(radius * std::cos(theta), radius * std::sin(theta), 0.0*m);
     }
+
+    SetSourceDirection(G4ThreeVector(x,y,z).rotateUz(fConeAxis));
+    SetSourcePosition(sourcePosition);
   }
-  else if(fGunType == "point")
-  {
-    G4ThreeVector randomDirection = G4ThreeVector(0.,0.,-1.);
-    G4ThreeVector sourcePosition(0.,0.,1.*cm);
-  }
+
+  // gaussian distributed source
   else if(fGunType == "gaussian"){
 
     // convert px to mm
@@ -154,10 +171,9 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     //G4double beamSigmaX = 1.711274*px_mm; // in mm
     //G4double beamSigmaY = 2.15191*px_mm; // in mm
     
-
     // a gaussian beta decay electron profile from 69Mn bdecay
-    G4double beamMeanX = 8.09627*px_mm; // in mm
-    G4double beamMeanY = 8.96997*px_mm; // in mm
+    G4double beamMeanX = 8.09627/16*px_mm; // in mm
+    G4double beamMeanY = 8.96997/16*px_mm; // in mm
     G4double beamSigmaX = 2.07117*px_mm; // in mm
     G4double beamSigmaY = 3.32483*px_mm; // in mm
 
@@ -165,19 +181,66 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     // Gaussian beam profile in XY plane with pure z direction
     G4double x0 = G4RandGauss::shoot(beamMeanX, beamSigmaX);
     G4double y0 = G4RandGauss::shoot(beamMeanY, beamSigmaY);
-    G4ThreeVector sourcePosition(x0*mm, y0*mm, 1.*mm);
 
-    G4ThreeVector randomDirection = G4ThreeVector(0.,0.,-1.);
+    G4double z = SampleImplantDepth();
+
+    G4cout << "Event " << anEvent->GetEventID()
+           << "  z = " << z/mm << " mm" << G4endl;
+
+
+
+
+    SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, z*mm));
+    //SetSourceDirection(G4ThreeVector(0.,0.,-1.)); // gaussian beam
+
+    // gaussian source with random momentum direction
+    G4double cosT = 2.0*G4UniformRand() - 1.0;
+    G4double sinT = std::sqrt(1.0 - cosT*cosT);
+    G4double phi  = 2.0*M_PI*G4UniformRand();
+
+    G4ThreeVector dir(sinT*std::cos(phi),sinT*std::sin(phi),cosT);
+    //G4ThreeVector dir = G4RandomDirection();
+    //particleGun->SetParticleMomentumDirection(dir);
+    SetSourceDirection(dir); 
+
+
   }
+
+  
+
+  // fall backs
   else{
-    G4ThreeVector randomDirection = G4ThreeVector(0.,0.,-1.);
-    G4ThreeVector sourcePosition(0.,0.,1.*cm);
+    SetSourcePosition(G4ThreeVector(0.,0.,1.*cm));
+    SetSourceDirection(G4ThreeVector(0.,0.,-1.));
   }
 
-
-
-  fParticleGun->SetParticlePosition(sourcePosition);
-  fParticleGun->SetParticleMomentumDirection(randomDirection);
+  fParticleGun->SetParticlePosition(fSourcePosition);
+  fParticleGun->SetParticleMomentumDirection(fSourceDirection);
 
   fParticleGun->GeneratePrimaryVertex(anEvent);
+}
+
+
+
+G4double MyPrimaryGenerator::SampleImplantDepth()
+{
+    G4double u = G4UniformRand();
+
+    // find first CDF bin above u
+    auto it = std::lower_bound(fCDF.begin(), fCDF.end(), u);
+
+    if (it == fCDF.begin())
+        return fX.front();
+    if (it == fCDF.end())
+        return fX.back();
+
+    size_t i = std::distance(fCDF.begin(), it);
+
+    // linear interpolation
+    G4double x1 = fX[i-1];
+    G4double x2 = fX[i];
+    G4double c1 = fCDF[i-1];
+    G4double c2 = fCDF[i];
+
+    return x1 + (u - c1) * (x2 - x1) / (c2 - c1);
 }
