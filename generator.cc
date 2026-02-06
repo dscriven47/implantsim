@@ -28,7 +28,7 @@ MyPrimaryGenerator::MyPrimaryGenerator()
   // Default macro-controlled values (set ONCE, not per event)
   fSourceMode    = "gamma";
   fKineticEnergy = 75.0 * keV;
-  fGunType = "gaussian";
+  fGunType = "point";
 
 
   // read the implant profile PDF

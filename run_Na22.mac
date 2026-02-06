@@ -1,0 +1,6 @@
+/run/initialize
+
+/mygen/mode Na22
+
+/mygen/energy 0 keV
+/run/beamOn 100000

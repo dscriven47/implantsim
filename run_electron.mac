@@ -1,0 +1,148 @@
+/run/initialize
+
+/mygen/mode electron
+
+/mygen/energy 30 keV
+/run/beamOn 1000000
+
+/mygen/energy 40 keV
+/run/beamOn 1000000
+
+/mygen/energy 50 keV
+/run/beamOn 1000000
+
+/mygen/energy 60 keV
+/run/beamOn 1000000
+
+/mygen/energy 70 keV
+/run/beamOn 1000000
+
+/mygen/energy 80 keV
+/run/beamOn 1000000
+
+/mygen/energy 90 keV
+/run/beamOn 1000000
+
+/mygen/energy 100 keV
+/run/beamOn 1000000
+
+/mygen/energy 125 keV
+/run/beamOn 1000000
+
+/mygen/energy 150 keV
+/run/beamOn 1000000
+
+/mygen/energy 175 keV
+/run/beamOn 1000000
+
+/mygen/energy 200 keV
+/run/beamOn 1000000
+
+/mygen/energy 225 keV
+/run/beamOn 1000000
+
+/mygen/energy 250 keV
+/run/beamOn 1000000
+
+/mygen/energy 275 keV
+/run/beamOn 1000000
+
+/mygen/energy 300 keV
+/run/beamOn 1000000
+
+/mygen/energy 350 keV
+/run/beamOn 1000000
+
+/mygen/energy 400 keV
+/run/beamOn 1000000
+
+/mygen/energy 450 keV
+/run/beamOn 1000000
+
+/mygen/energy 500 keV
+/run/beamOn 1000000
+
+/mygen/energy 600 keV
+/run/beamOn 1000000
+
+/mygen/energy 700 keV
+/run/beamOn 1000000
+
+/mygen/energy 800 keV
+/run/beamOn 1000000
+
+/mygen/energy 900 keV
+/run/beamOn 1000000
+
+/mygen/energy 1000 keV
+/run/beamOn 1000000
+
+/mygen/energy 1250 keV
+/run/beamOn 1000000
+
+/mygen/energy 1500 keV
+/run/beamOn 1000000
+
+/mygen/energy 1750 keV
+/run/beamOn 1000000
+
+/mygen/energy 2000 keV
+/run/beamOn 1000000
+
+/mygen/energy 2250 keV
+/run/beamOn 1000000
+
+/mygen/energy 2500 keV
+/run/beamOn 1000000
+
+/mygen/energy 2750 keV
+/run/beamOn 1000000
+
+/mygen/energy 3000 keV
+/run/beamOn 1000000
+
+/mygen/energy 3500 keV
+/run/beamOn 1000000
+
+/mygen/energy 4000 keV
+/run/beamOn 1000000
+
+/mygen/energy 4500 keV
+/run/beamOn 1000000
+
+/mygen/energy 5000 keV
+/run/beamOn 1000000
+
+/mygen/energy 6000 keV
+/run/beamOn 1000000
+
+/mygen/energy 7000 keV
+/run/beamOn 1000000
+
+/mygen/energy 8000 keV
+/run/beamOn 1000000
+
+/mygen/energy 9000 keV
+/run/beamOn 1000000
+
+/mygen/energy 10000 keV
+/run/beamOn 1000000
+
+/mygen/energy 12500 keV
+/run/beamOn 1000000
+
+/mygen/energy 15000 keV
+/run/beamOn 1000000
+
+/mygen/energy 17500 keV
+/run/beamOn 1000000
+
+/mygen/energy 20000 keV
+/run/beamOn 1000000
+
+/mygen/energy 22500 keV
+/run/beamOn 1000000
+
+/mygen/energy 25000 keV
+/run/beamOn 1000000
+

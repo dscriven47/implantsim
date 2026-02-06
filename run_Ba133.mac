@@ -1,0 +1,6 @@
+/run/initialize
+
+/mygen/mode Ba133
+
+/mygen/energy 0 keV
+/run/beamOn 1000000
