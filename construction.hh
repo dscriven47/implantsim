@@ -67,6 +67,7 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
     virtual void ConstructSDandField();
     void VisAttributes();
     G4LogicalVolume* BuildScintillatorMountLV();
+    
 };
 
 #endif

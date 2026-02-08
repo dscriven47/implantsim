@@ -11,6 +11,9 @@
 #include "G4String.hh"
 #include "globals.hh"
 
+#include <fstream>
+#include <vector>
+
 
 class G4ParticleGun;
 class G4GenericMessenger;

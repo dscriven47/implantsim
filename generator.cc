@@ -27,19 +27,35 @@ MyPrimaryGenerator::MyPrimaryGenerator()
 
   // Default macro-controlled values (set ONCE, not per event)
   fSourceMode    = "gamma";
-  fKineticEnergy = 75.0 * keV;
-  fGunType = "point";
+  fKineticEnergy = 40 * keV;
+  fGunType = "gaussian";
 
 
-  // read the implant profile PDF
-  std::ifstream infile("implant_depth_cdf.txt");
-  G4double x, cdf;
-  while (infile >> x >> cdf)
-  {
-    fX.push_back(x * mm);   // apply units HERE
-    fCDF.push_back(cdf);
+
+  
+  std::ifstream in("../generate_zpos/data_norm.txt");
+
+  std::vector<G4double> p;
+  G4double x, pdf;
+
+  while (in >> x >> pdf) {
+    fX.push_back(x * mm);  // apply units ONCE
+    p.push_back(pdf);      // pdf in 1/mm
   }
-  infile.close();
+  in.close();
+
+  // Allocate CDF
+  fCDF.resize(p.size());
+  fCDF[0] = 0.0;
+
+  // 👉 THIS IS WHERE YOUR LOOP GOES 👇
+  for (size_t i = 1; i < p.size(); ++i) {
+    G4double dx = fX[i] - fX[i-1];
+    fCDF[i] = fCDF[i-1] + 0.5*(p[i] + p[i-1]) * dx;
+  }
+
+  // Normalize to exactly 1
+  for (auto& v : fCDF) v /= fCDF.back();
 
 
   DefineCommands();
@@ -181,16 +197,15 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     // Gaussian beam profile in XY plane with pure z direction
     G4double x0 = G4RandGauss::shoot(beamMeanX, beamSigmaX);
     G4double y0 = G4RandGauss::shoot(beamMeanY, beamSigmaY);
-
-    G4double z = SampleImplantDepth();
-
-    G4cout << "Event " << anEvent->GetEventID()
-           << "  z = " << z/mm << " mm" << G4endl;
-
+    
+    G4double sample_depth = SampleImplantDepth(); // 1.5mm is half the detector thickness
+    G4double z0 = 1.5-sample_depth;
+    //G4cout << "Event " << anEvent->GetEventID() << "  z = " << 1.5 << " mm" << " sample_depth = " << sample_depth << " mm" << G4endl;
 
 
 
-    SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, z*mm));
+
+    SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, z0*mm));
     //SetSourceDirection(G4ThreeVector(0.,0.,-1.)); // gaussian beam
 
     // gaussian source with random momentum direction
@@ -221,26 +236,22 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
 }
 
 
-
 G4double MyPrimaryGenerator::SampleImplantDepth()
 {
-    G4double u = G4UniformRand();
+  G4double u = G4UniformRand();
 
-    // find first CDF bin above u
-    auto it = std::lower_bound(fCDF.begin(), fCDF.end(), u);
+  auto it = std::lower_bound(fCDF.begin(), fCDF.end(), u);
 
-    if (it == fCDF.begin())
-        return fX.front();
-    if (it == fCDF.end())
-        return fX.back();
+  if (it == fCDF.begin())
+    return fX.front();
 
-    size_t i = std::distance(fCDF.begin(), it);
+  if (it == fCDF.end())
+    return fX.back();   // should basically never happen if CDF is correct
 
-    // linear interpolation
-    G4double x1 = fX[i-1];
-    G4double x2 = fX[i];
-    G4double c1 = fCDF[i-1];
-    G4double c2 = fCDF[i];
+  size_t i = it - fCDF.begin();
 
-    return x1 + (u - c1) * (x2 - x1) / (c2 - c1);
+  return fX[i-1]
+       + (u - fCDF[i-1]) * (fX[i] - fX[i-1])
+         / (fCDF[i] - fCDF[i-1]);
 }
+
