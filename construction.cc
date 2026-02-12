@@ -23,7 +23,7 @@ MyDetectorConstruction::MyDetectorConstruction()
   // size of the world volume
   xWorld = 0.08*m;
   yWorld = 0.08*m;
-  zWorld = 0.3*m;
+  zWorld = 0.08*m;
 }
 
 MyDetectorConstruction::~MyDetectorConstruction()
@@ -416,7 +416,7 @@ void MyDetectorConstruction::VisAttributes()
 {
   G4VisAttributes *scint_va = new G4VisAttributes(G4Color(0.8,0.1,0.5,0.5));
   scint_va->SetForceSolid(true);
-  scint_va->SetForceWireframe(true);
+  //scint_va->SetForceWireframe(true);
   logicScintillator->SetVisAttributes(scint_va);
 
   G4VisAttributes *photocath_va = new G4VisAttributes(G4Color(1.0,0.6,0.4,1));
@@ -430,8 +430,8 @@ void MyDetectorConstruction::VisAttributes()
   logicPMTWindow->SetVisAttributes(PMTglass_va);
 
 
-  G4VisAttributes *quartzWindow_va = new G4VisAttributes(G4Color(0.0,0.0,0.5,0.5));
-  quartzWindow_va->SetForceSolid(true);
+  G4VisAttributes *quartzWindow_va = new G4VisAttributes(G4Color(0.2,0.2,1,1.0));
+  //quartzWindow_va->SetForceSolid(true);
   quartzWindow_va->SetForceWireframe(true);
   logicQuartzWindow->SetVisAttributes(quartzWindow_va);
 
@@ -544,7 +544,7 @@ auto* lv = new G4LogicalVolume(s6, mat, "CeBrDetectorMountLV");
 
 
 // Optional vis
-auto* vis = new G4VisAttributes(G4Colour(0.7,0,0));
+auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.1));
 vis->SetForceSolid(false);
 lv->SetVisAttributes(vis);
 

@@ -27,7 +27,7 @@ MyPrimaryGenerator::MyPrimaryGenerator()
 
   // Default macro-controlled values (set ONCE, not per event)
   fSourceMode    = "gamma";
-  fKineticEnergy = 40 * keV;
+  fKineticEnergy = 30 * keV;
   fGunType = "gaussian";
 
 
@@ -188,25 +188,32 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     //G4double beamSigmaY = 2.15191*px_mm; // in mm
     
     // a gaussian beta decay electron profile from 69Mn bdecay
-    G4double beamMeanX = 8.09627/16*px_mm; // in mm
-    G4double beamMeanY = 8.96997/16*px_mm; // in mm
-    G4double beamSigmaX = 2.07117*px_mm; // in mm
-    G4double beamSigmaY = 3.32483*px_mm; // in mm
+    G4double measuredX = 8.09627;
+    G4double measuredY = 8.96997;
+    G4double measuredSx = 2.07117;
+    G4double measuredSy = 3.32483;
+    G4double beamMeanX = measuredX*px_mm - 24; // in mm
+    G4double beamMeanY = measuredY*px_mm - 24; // in mm
+    G4double beamSigmaX = measuredSx*px_mm; // in mm
+    G4double beamSigmaY = measuredSy*px_mm; // in mm
 
 
     // Gaussian beam profile in XY plane with pure z direction
-    G4double x0 = G4RandGauss::shoot(beamMeanX, beamSigmaX);
-    G4double y0 = G4RandGauss::shoot(beamMeanY, beamSigmaY);
+    G4bool onDetector = false;
+    G4double x0=-999*mm;
+    G4double y0=-999*mm;
+    G4double z0=-999*mm;
+    while (!onDetector) { // insure that the particles are generated in the scintillator
+      x0 = G4RandGauss::shoot(beamMeanX, beamSigmaX);
+      y0 = G4RandGauss::shoot(beamMeanY, beamSigmaY);
+      z0 = 1.5-SampleImplantDepth(); // 1.5mm is half the detector thickness
+      if (x0 >= -24 && x0 <= 24. && y0 >= -24. && y0 <= 24. && z0 >= -1.5 && z0 <= 1.5) {
+        onDetector = true;
+        SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, 1.*cm));
+      }
+    }
     
-    G4double sample_depth = SampleImplantDepth(); // 1.5mm is half the detector thickness
-    G4double z0 = 1.5-sample_depth;
-    //G4cout << "Event " << anEvent->GetEventID() << "  z = " << 1.5 << " mm" << " sample_depth = " << sample_depth << " mm" << G4endl;
 
-
-
-
-    SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, z0*mm));
-    //SetSourceDirection(G4ThreeVector(0.,0.,-1.)); // gaussian beam
 
     // gaussian source with random momentum direction
     G4double cosT = 2.0*G4UniformRand() - 1.0;
@@ -214,9 +221,10 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     G4double phi  = 2.0*M_PI*G4UniformRand();
 
     G4ThreeVector dir(sinT*std::cos(phi),sinT*std::sin(phi),cosT);
-    //G4ThreeVector dir = G4RandomDirection();
-    //particleGun->SetParticleMomentumDirection(dir);
-    SetSourceDirection(dir); 
+
+    SetSourcePosition(G4ThreeVector(x0*mm, y0*mm, z0*mm));
+    //SetSourceDirection(G4ThreeVector(0.,0.,-1.)); // beam with gaussian spread
+    SetSourceDirection(dir); // gaussian source with random direction
 
 
   }
