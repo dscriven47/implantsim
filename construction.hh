@@ -16,6 +16,7 @@
 #include "G4OpticalSurface.hh"
 #include "G4LogicalSkinSurface.hh"
 #include "G4SubtractionSolid.hh"
+#include "G4UnionSolid.hh"
 
 #include "detector.hh"
 
@@ -61,9 +62,11 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
     void DefineMaterials();
     
     void ConstructScintillator();
+    
 
     virtual void ConstructSDandField();
     void VisAttributes();
+    G4LogicalVolume* BuildCylindricalHousing();
     G4LogicalVolume* BuildScintillatorMountLV();
     
 };

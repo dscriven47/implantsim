@@ -8,9 +8,9 @@ MyDetectorConstruction::MyDetectorConstruction()
   DefineMaterials();
 
   // size of the world volume
-  xWorld = 0.08*m;
-  yWorld = 0.08*m;
-  zWorld = 0.08*m;
+  xWorld = 0.5*m;
+  yWorld = 0.5*m;
+  zWorld = 0.5*m;
 }
 
 MyDetectorConstruction::MyDetectorConstruction(G4LogicalVolume* worldLog)
@@ -115,6 +115,13 @@ void MyDetectorConstruction::DefineMaterials()
 
   // Bialkali photocathode
   //Bialkali = new G4Material("Bialkali",)
+
+  // PLA is commonly represented as (C3H4O2)n
+  G4double density = 1.24 * g/cm3;
+  G4Material* PLA = new G4Material("PLA", density, 3);
+  PLA->AddElement(nist->FindOrBuildElement("C"),3);
+  PLA->AddElement(nist->FindOrBuildElement("H"),4);
+  PLA->AddElement(nist->FindOrBuildElement("O"),2);
 
 
 
@@ -323,6 +330,17 @@ void MyDetectorConstruction::ConstructScintillator()
   scintFrameRot->rotateY(180*deg);
   scintFrameRot->rotateZ(0*deg);	
   new G4PVPlacement(scintFrameRot, G4ThreeVector(0,-2.8*mm,0.25*cm), mountLV, "ScintillatorMountPV", logicWorld, false, 0);
+
+  // place the cylindrical tube
+  auto* cyltubeLV = BuildCylindricalHousing();
+  G4RotationMatrix* cyltubeRot = new G4RotationMatrix();
+  cyltubeRot->rotateX(0*deg);
+  cyltubeRot->rotateY(0*deg);
+  cyltubeRot->rotateZ(0*deg);
+  new G4PVPlacement(cyltubeRot, G4ThreeVector(0*cm,0*cm,0*cm),cyltubeLV, "CyclindricalTubePV",logicWorld, false, 0);
+
+
+
  
   VisAttributes();
 
@@ -486,4 +504,105 @@ G4LogicalVolume* MyDetectorConstruction::BuildScintillatorMountLV()
 
 
   return lv;
+}
+
+
+G4LogicalVolume* MyDetectorConstruction::BuildCylindricalHousing()
+{
+
+  //G4Material* pla = G4Material::GetMaterial("PLA");
+  //if (!pla) pla = MakePLA();
+  auto* nist = G4NistManager::Instance();
+  G4Material* pla = nist->FindOrBuildMaterial("PLA");
+
+  G4double wallThickness = 0.059 * 2.54 * cm;
+
+  // good
+  G4double p1innerDiameter = 4.250 * 2.54 * cm;
+  G4double p1outerDiameter = p1innerDiameter + wallThickness;
+  G4double p1length = 11.875 * 2.54 * cm;
+
+  // good
+  G4double p2outerDiameter = 6.00 *2.54 * cm;
+  G4double p2innerDiameter = p2outerDiameter - p1innerDiameter;
+  G4double p2length = 2.905 * 2.54 * cm;
+
+  // good
+  G4double p3outerDiameter = 7.236 * 2.54 * cm;
+  G4double p3innerDiameter = p2innerDiameter;
+  
+  G4double p3length = 0.5 * 2.54 * cm;
+
+
+
+  G4Tubs* solidPart1 = new G4Tubs(
+    "solidPart1",
+    p1innerDiameter/2,
+    p1outerDiameter/2,
+    p1length / 2.0,   // Geant4 uses half-length
+    0.0 * deg,
+    360.0 * deg
+  );
+
+  G4Tubs* solidPart2 = new G4Tubs(
+    "solidPart2",
+    p2innerDiameter/2,
+    p2outerDiameter/2,
+    p2length / 2.0,   // Geant4 uses half-length
+    0.0 * deg,
+    360.0 * deg
+  );
+
+  G4Tubs* solidPart3 = new G4Tubs(
+    "solidPart3",
+    p3innerDiameter/2,
+    p3outerDiameter/2,
+    p3length / 2.0,   // Geant4 uses half-length
+    0.0 * deg,
+    360.0 * deg
+  );
+
+ // -------------------------
+  // Union positions
+  // These are the positions of B and C
+  // relative to A's coordinate system
+  // -------------------------
+
+  // Put B on top of A in z
+  G4ThreeVector posB(0, 0, (p1length + p2length)/2.0);
+
+  G4UnionSolid* solidAB = new G4UnionSolid(
+      "solidAB",
+      solidPart1,
+      solidPart2,
+      nullptr,
+      posB
+  );
+
+  // Put C on top of B
+  G4ThreeVector posC(0, 0, (p1length + p2length) + p3length/2.0);
+
+  G4UnionSolid* solidABC = new G4UnionSolid(
+      "solidABC",
+      solidAB,
+      solidPart3,
+      nullptr,
+      posC
+  );
+
+  // One logical volume from the final unioned solid
+  G4LogicalVolume* logicPart = new G4LogicalVolume(
+      solidABC,
+      pla,
+      "logicPart"
+  );
+
+
+// Optional vis
+auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.5));
+vis->SetForceSolid(true);
+logicPart->SetVisAttributes(vis);
+
+  return logicPart;
+
 }
