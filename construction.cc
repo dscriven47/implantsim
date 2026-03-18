@@ -5,25 +5,20 @@ MyDetectorConstruction::MyDetectorConstruction()
 {
   fMessenger = new G4GenericMessenger(this, "/detector/", "Detector Construction");
 
-  fMessenger->DeclareProperty("nCols", nCols, "Number of columns");
-  fMessenger->DeclareProperty("nRows", nRows, "Number of rows");
-  fMessenger->DeclareProperty("isCherenkov", isCherenkov, "Toggle Cherenkov Detector");
-  fMessenger->DeclareProperty("isScintillator", isScintillator, "Toggle Scintillator Detector");
-  fMessenger->DeclareProperty("isTOF", isTOF, "Toggle TOF Detector");
-
-  nCols = 10;
-  nRows = 10;
-
   DefineMaterials();
-
-  isCherenkov=false;
-  isScintillator=true;
-  isTOF=false;
 
   // size of the world volume
   xWorld = 0.08*m;
   yWorld = 0.08*m;
   zWorld = 0.08*m;
+}
+
+MyDetectorConstruction::MyDetectorConstruction(G4LogicalVolume* worldLog)
+{
+  fMessenger = new G4GenericMessenger(this, "/detector/", "Detector Construction");
+
+  DefineMaterials();
+
 }
 
 MyDetectorConstruction::~MyDetectorConstruction()
@@ -328,55 +323,14 @@ void MyDetectorConstruction::ConstructScintillator()
   scintFrameRot->rotateY(180*deg);
   scintFrameRot->rotateZ(0*deg);	
   new G4PVPlacement(scintFrameRot, G4ThreeVector(0,-2.8*mm,0.25*cm), mountLV, "ScintillatorMountPV", logicWorld, false, 0);
-  
  
   VisAttributes();
+
 }
 
 
 
 
-void MyDetectorConstruction::ConstructCherenkov()
-{
-  // here we can construction our aerogel
-  solidRadiator = new G4Box("solidRadiator",0.4*m, 0.4*m, 0.01*m);
-  logicRadiator = new G4LogicalVolume(solidRadiator,Aerogel,"logicRadiator");
-  physRadiator = new G4PVPlacement(0, G4ThreeVector(0.,0.,0.25*m),logicRadiator,"physRadiator",logicWorld, 
-                                   false,0,true);
-
-  fScoringVolume = logicRadiator;
-
-  // now we will make a sensitive detector
-  solidDetector = new G4Box("solidDetector",xWorld/nRows,yWorld/nCols,0.01*m);
-  logicDetector = new G4LogicalVolume(solidDetector,worldMat,"logicDetector");
-
-  // here we generate many detectors at the same time. The value of rows and
-  // columns is initialized in the header file but can be changed at runtime
-  // by using the commands of the detector class
-  for(G4int i=0; i<nRows; i++){// for loop to produce many detectors
-    for(G4int j=0; j<nCols; j++){
-      physDetector = new G4PVPlacement(0,
-                        G4ThreeVector(-0.5*m+(i+0.5)*m/nRows,-0.5*m+(j+0.5)*m/nCols,0.49*m),logicDetector,
-                        "physDetector",logicWorld,false,j+i*nCols,true);
-
-    }
-  }
-}
-
-
-
-
-
-
-void MyDetectorConstruction::ConstructTOF()
-{
-  solidDetector = new G4Box("solidDetector",1.*m,1.*m,0.1*m);
-  logicDetector = new G4LogicalVolume(solidDetector, worldMat,"logicDetector");
-  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m,-4.*m),logicDetector,"physDetector",logicWorld,
-                                   false,0,true);
-  physDetector = new G4PVPlacement(0,G4ThreeVector(0.*m,0.*m, 3.*m),logicDetector,"physDetector",logicWorld,
-                                   false,1,true);
-}
 
 
 G4VPhysicalVolume *MyDetectorConstruction::Construct()
@@ -392,9 +346,7 @@ G4VPhysicalVolume *MyDetectorConstruction::Construct()
   logicWorld = new G4LogicalVolume(solidWorld,worldMat,"locigWorld");
   physWorld = new G4PVPlacement(0,G4ThreeVector(0.,0.,0.),logicWorld,"physWorld",0,false,0,true);
 
-  if(isCherenkov) ConstructCherenkov();
-  if(isScintillator) ConstructScintillator();
-  if(isTOF) ConstructTOF();
+  ConstructScintillator();
 
 
   return physWorld;
@@ -437,117 +389,101 @@ void MyDetectorConstruction::VisAttributes()
 
 }
 
+
 G4LogicalVolume* MyDetectorConstruction::BuildScintillatorMountLV()
 {
-const G4double inch = 25.4*mm;
+  const G4double inch = 25.4*mm;
+
+  // Material (approx): 6061-T6 -> use pure Al for geometry
+  auto* nist = G4NistManager::Instance();
+  G4Material* mat = nist->FindOrBuildMaterial("G4_Al");
+
+  // ---- Overall stock ---- (inches)
+  const G4double frameW = 2.900*inch;
+  const G4double frameH = 3.380*inch;
+  const G4double frameT = 0.125*inch;
+
+  // ---- Through window (rectangular cutout) ----
+  // Using x = 0.378 -> 2.523 and y = 0.600 -> 3.000 from the print.
+  const G4double win_x0 = 0.25*inch;
+  const G4double win_x1 = 2.65*inch;
+  const G4double win_y0 = 0.600*inch;
+  const G4double win_y1 = 3.000*inch;
+
+  const G4double winW = (win_x1 - win_x0);
+  const G4double winH = (win_y1 - win_y0);
+  const G4double winCx = 0.5*(win_x0 + win_x1) - 0.5*frameW;
+  const G4double winCy = 0.5*(win_y0 + win_y1) - 0.5*frameH;
+
+  // ---- Front-side pocket (recess) ----
+  // Depth = 0.063 into the face (from section view).
+  // Using pocket footprint x = 0.250 -> 2.650 and y = 0.490 -> 3.110.
+  const G4double pocketDepth = 0.063*inch;
+
+  const G4double p_x0 = 0.140*inch;
+  const G4double p_x1 = 2.760*inch;
+  const G4double p_y0 = 0.490*inch;
+  const G4double p_y1 = 3.110*inch;
+
+  const G4double pW = (p_x1 - p_x0);
+  const G4double pH = (p_y1 - p_y0);
+  const G4double pCx = 0.5*(p_x0 + p_x1) - 0.5*frameW;
+  const G4double pCy = 0.5*(p_y0 + p_y1) - 0.5*frameH;
+
+  // ---- 4X Ø0.116 THRU holes ----
+  const G4double holeD = 0.116*inch;
+  const G4double holeR = 0.5*holeD;
+
+  // Using hole center coords from the print:
+  // x = 0.378 and 2.523 ; y = 0.345 and 3.255
+  const G4double hxL = 0.378*inch - 0.5*frameW;
+  const G4double hxR = 2.523*inch - 0.5*frameW;
+  const G4double hyB = 0.345*inch - 0.5*frameH;
+  const G4double hyT = 3.255*inch - 0.5*frameH;
+
+  // ---- Base solid: simple rectangular stock ----
+  // NOTE: This ignores the outer chamfers/radii (R2.115 TYP) on the drawing.
+  auto* plate = new G4Box("CeBrMountPlate", 0.5*frameW, 0.5*frameH, 0.5*frameT);
+
+  // ---- Subtract the front-side pocket ----
+  auto* pocketCut = new G4Box("CeBrPocketCut", 0.5*pW, 0.5*pH, 0.5*pocketDepth);
+
+  // Put pocket on +Z face (flip sign if your “front” is -Z)
+  const G4double zPocket = 0.5*frameT - 0.5*pocketDepth;
+
+  auto* s1 = new G4SubtractionSolid("CeBrMinusPocket",
+  plate, pocketCut,
+  nullptr,
+  G4ThreeVector(pCx, pCy, zPocket));
 
 
-// Material (approx): 6061-T6 -> use pure Al for geometry
-auto* nist = G4NistManager::Instance();
-G4Material* mat = nist->FindOrBuildMaterial("G4_Al");
+  // ---- Subtract through window (full thickness) ----
+  auto* windowCut = new G4Box("CeBrWindowCut",
+                                              0.5*winW, 0.5*winH, 0.5*(frameT + 1.0*mm)); // safety margin
 
 
-// ---- Overall stock ---- (inches)
-const G4double frameW = 2.900*inch;
-const G4double frameH = 3.380*inch;
-const G4double frameT = 0.125*inch;
+  auto* s2 = new G4SubtractionSolid("CeBrMinusPocketMinusWindow",
+                                                                  s1, windowCut,
+                                                                  nullptr,
+                                                                  G4ThreeVector(winCx, winCy, 0.0));
+
+  // ---- Subtract the 4 holes ----
+  auto* holeCut = new G4Tubs("CeBrHoleCut",
+                              0.0, holeR, 0.5*(frameT + 1.0*mm),
+                              0.0, 360.0*deg);
+
+  auto* s3 = new G4SubtractionSolid("CeBrMinusHole1", s2, holeCut, nullptr, G4ThreeVector(hxL, hyB, 0.0));
+  auto* s4 = new G4SubtractionSolid("CeBrMinusHole2", s3, holeCut, nullptr, G4ThreeVector(hxR, hyB, 0.0));
+  auto* s5 = new G4SubtractionSolid("CeBrMinusHole3", s4, holeCut, nullptr, G4ThreeVector(hxL, hyT, 0.0));
+  auto* s6 = new G4SubtractionSolid("CeBrMinusHole4", s5, holeCut, nullptr, G4ThreeVector(hxR, hyT, 0.0));
+
+  auto* lv = new G4LogicalVolume(s6, mat, "CeBrDetectorMountLV");
+
+  // Optional vis
+  auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.1));
+  vis->SetForceSolid(false);
+  lv->SetVisAttributes(vis);
 
 
-// ---- Through window (rectangular cutout) ----
-// Using x = 0.378 -> 2.523 and y = 0.600 -> 3.000 from the print.
-const G4double win_x0 = 0.25*inch;
-const G4double win_x1 = 2.65*inch;
-const G4double win_y0 = 0.600*inch;
-const G4double win_y1 = 3.000*inch;
-
-
-const G4double winW = (win_x1 - win_x0);
-const G4double winH = (win_y1 - win_y0);
-const G4double winCx = 0.5*(win_x0 + win_x1) - 0.5*frameW;
-const G4double winCy = 0.5*(win_y0 + win_y1) - 0.5*frameH;
-
-
-// ---- Front-side pocket (recess) ----
-// Depth = 0.063 into the face (from section view).
-// Using pocket footprint x = 0.250 -> 2.650 and y = 0.490 -> 3.110.
-const G4double pocketDepth = 0.063*inch;
-
-
-const G4double p_x0 = 0.140*inch;
-const G4double p_x1 = 2.760*inch;
-const G4double p_y0 = 0.490*inch;
-const G4double p_y1 = 3.110*inch;
-
-
-const G4double pW = (p_x1 - p_x0);
-const G4double pH = (p_y1 - p_y0);
-const G4double pCx = 0.5*(p_x0 + p_x1) - 0.5*frameW;
-const G4double pCy = 0.5*(p_y0 + p_y1) - 0.5*frameH;
-
-
-// ---- 4X Ø0.116 THRU holes ----
-const G4double holeD = 0.116*inch;
-const G4double holeR = 0.5*holeD;
-
-
-// Using hole center coords from the print:
-// x = 0.378 and 2.523 ; y = 0.345 and 3.255
-const G4double hxL = 0.378*inch - 0.5*frameW;
-const G4double hxR = 2.523*inch - 0.5*frameW;
-const G4double hyB = 0.345*inch - 0.5*frameH;
-const G4double hyT = 3.255*inch - 0.5*frameH;
-
-
-// ---- Base solid: simple rectangular stock ----
-// NOTE: This ignores the outer chamfers/radii (R2.115 TYP) on the drawing.
-auto* plate = new G4Box("CeBrMountPlate", 0.5*frameW, 0.5*frameH, 0.5*frameT);
-
-
-// ---- Subtract the front-side pocket ----
-auto* pocketCut = new G4Box("CeBrPocketCut", 0.5*pW, 0.5*pH, 0.5*pocketDepth);
-
-
-// Put pocket on +Z face (flip sign if your “front” is -Z)
-const G4double zPocket = 0.5*frameT - 0.5*pocketDepth;
-
-
-auto* s1 = new G4SubtractionSolid("CeBrMinusPocket",
-plate, pocketCut,
-nullptr,
-G4ThreeVector(pCx, pCy, zPocket));
-
-
-// ---- Subtract through window (full thickness) ----
-auto* windowCut = new G4Box("CeBrWindowCut",
-                                            0.5*winW, 0.5*winH, 0.5*(frameT + 1.0*mm)); // safety margin
-
-
-auto* s2 = new G4SubtractionSolid("CeBrMinusPocketMinusWindow",
-                                                                s1, windowCut,
-                                                                nullptr,
-                                                                G4ThreeVector(winCx, winCy, 0.0));
-
-
-// ---- Subtract the 4 holes ----
-auto* holeCut = new G4Tubs("CeBrHoleCut",
-                            0.0, holeR, 0.5*(frameT + 1.0*mm),
-                            0.0, 360.0*deg);
-
-
-auto* s3 = new G4SubtractionSolid("CeBrMinusHole1", s2, holeCut, nullptr, G4ThreeVector(hxL, hyB, 0.0));
-auto* s4 = new G4SubtractionSolid("CeBrMinusHole2", s3, holeCut, nullptr, G4ThreeVector(hxR, hyB, 0.0));
-auto* s5 = new G4SubtractionSolid("CeBrMinusHole3", s4, holeCut, nullptr, G4ThreeVector(hxL, hyT, 0.0));
-auto* s6 = new G4SubtractionSolid("CeBrMinusHole4", s5, holeCut, nullptr, G4ThreeVector(hxR, hyT, 0.0));
-
-
-auto* lv = new G4LogicalVolume(s6, mat, "CeBrDetectorMountLV");
-
-
-// Optional vis
-auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.1));
-vis->SetForceSolid(false);
-lv->SetVisAttributes(vis);
-
-
-return lv;
+  return lv;
 }

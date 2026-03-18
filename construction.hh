@@ -25,12 +25,13 @@
 class MyDetectorConstruction : public G4VUserDetectorConstruction
 {
   public:
-    MyDetectorConstruction(); // constructor
-    ~MyDetectorConstruction(); // destructor
+    MyDetectorConstruction();
+    MyDetectorConstruction(G4LogicalVolume*);
+    ~MyDetectorConstruction();
 
     G4LogicalVolume *GetScoringVolume() const { return fScoringVolume; }
 
-    virtual G4VPhysicalVolume *Construct(); // this is the main function that constructs the detector geometry
+    virtual G4VPhysicalVolume *Construct(); 
 
   private:
     G4Box *solidWorld, *solidRadiator, *solidDetector,*solidScintillator,
@@ -56,14 +57,11 @@ class MyDetectorConstruction : public G4VUserDetectorConstruction
 
     G4double xWorld,yWorld,zWorld;
 
-    bool isCherenkov;
-    bool isScintillator;
-    bool isTOF;
         
     void DefineMaterials();
-    void ConstructCherenkov();
+    
     void ConstructScintillator();
-    void ConstructTOF();
+
     virtual void ConstructSDandField();
     void VisAttributes();
     G4LogicalVolume* BuildScintillatorMountLV();
