@@ -27,7 +27,7 @@ MyPrimaryGenerator::MyPrimaryGenerator()
 
   // Default macro-controlled values (set ONCE, not per event)
   fSourceMode    = "gamma";
-  fKineticEnergy = 30 * keV;
+  fKineticEnergy = 1000 * keV;
   fGunType = "gaussian";
 
 
@@ -162,13 +162,13 @@ void MyPrimaryGenerator::GeneratePrimaries(G4Event* anEvent)
     G4double x = r * std::cos(phi);
     G4double y = r * std::sin(phi);
     
-    G4ThreeVector sourcePosition = G4ThreeVector(0.,0.,1.*cm);
+    G4ThreeVector sourcePosition = G4ThreeVector(0.,0.,2.*cm);
 
     if(fConeApexRadius > 0.) 
     {
       G4double radius = fConeApexRadius * std::sqrt(G4UniformRand());
       G4double theta = G4UniformRand() * 2. * M_PI;
-      sourcePosition = G4ThreeVector(radius * std::cos(theta), radius * std::sin(theta), 0.0*m);
+      sourcePosition = G4ThreeVector(radius * std::cos(theta), radius * std::sin(theta), 2.0*cm);
     }
 
     SetSourceDirection(G4ThreeVector(x,y,z).rotateUz(fConeAxis));
