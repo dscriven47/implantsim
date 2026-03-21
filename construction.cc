@@ -598,10 +598,10 @@ G4LogicalVolume* MyDetectorConstruction::BuildCylindricalHousing()
   );
 
 
-// Optional vis
-auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.5));
-vis->SetForceSolid(true);
-logicPart->SetVisAttributes(vis);
+  // Optional vis
+  auto* vis = new G4VisAttributes(G4Colour(1.0,0.1,0.5));
+  vis->SetForceSolid(true);
+  logicPart->SetVisAttributes(vis);
 
   return logicPart;
 
